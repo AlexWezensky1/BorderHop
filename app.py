@@ -1,4 +1,6 @@
 ﻿from flask import Flask
+import os
+
 #import pyodbc
 
 # Create an instance of the Flask class that is the WSGI application.
