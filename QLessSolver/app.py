@@ -1,111 +1,241 @@
-# from flask import Flask
-# import pyodbc
-
-# # Create an instance of the Flask class that is the WSGI application.
-# # The first argument is the name of the application module or package,
-# # typically __name__ when using a single module.
-# app = Flask(__name__)
-
-# # Flask route decorators map / and /hello to the hello function.
-# # To add other resources, create functions that generate the page contents
-# # and add decorators to define the appropriate resource locators for them.
-
-# @app.route('/hello')
-# def hello():
-#    # Render the page
-#    return "Hello Python!"
-
-# @app.route('/')
-# @app.route('/QLessSolver')
-# def QLessSolver():
-
-#     conn = pyodbc.connect(
-#         "Driver={ODBC Driver 18 for SQL Server};"
-#         "Server=localhost;"   # <- replace with your SSMS server name
-#         "Database=English Words;"
-#         "Trusted_Connection=yes;"
-#         "Encrypt=no;"
-#     )
-
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT TOP 10 * FROM [tblCSW24 - 280k]")
-#     rows = cursor.fetchall()
-    
-#     # Start HTML with Calibri font
-#     html = """
-#     <html>
-#     <head>
-#     <style>
-#         body { font-family: Calibri, sans-serif; }
-#         table { border-collapse: collapse; width: 100%; }
-#         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-#         th { background-color: #f2f2f2; }
-#     </style>
-#     </head>
-#     <body>
-#     <h2>Top 10 Words</h2>
-#     <table>
-#         <tr>
-#             <th>Word</th>
-#             <th>Definition</th>
-#             <th>Part of Speech</th>
-#             <th>Other Columns</th>
-#         </tr>
-#     """
-
-#     # Populate table rows
-#     for row in rows:
-#         word = str(row[0])
-#         definition = str(row[1]) if row[1] else ""
-#         pos = str(row[2]) if row[2] else ""
-#         other = " | ".join(str(col) for col in row[3:])  # any extra columns
-#         html += f"<tr><td>{word}</td><td>{definition}</td><td>{pos}</td><td>{other}</td></tr>"
-
-#     html += "</table>"
-
-#     # Add Dice section
-#     dice = [
-#         "iinnoy", "dgglrr", "bllmmy", "fgkppv", "aeiouu", 
-#         "bknsxz", "dfllrw", "hhpttw", "hhnnrr", "ccmstt", 
-#         "bccdjt", "aaeeoo"
-#     ]
-#     html += "<h2>Dice</h2><table><tr>" + "".join(f"<td>{d}</td>" for d in dice) + "</tr></table>"
-#     html += "<h2>Roll Dice Result</h2>" + " ".join(RollDice())
-
-#     html += "</body></html>"
-
-#     return html
-
-# def RollDice():
-#     import random
-#     dice = [
-#         "iinnoy", "dgglrr", "bllmmy", "fgkppv", "aeiouu", 
-#         "bknsxz", "dfllrw", "hhpttw", "hhnnrr", "ccmstt", 
-#         "bccdjt", "aaeeoo"
-#     ]
-#     result = [random.choice(die) for die in dice]
-#     return result
-
-# if __name__ == '__main__':
-#    # Run the app server on localhost:4449
-#    app.run('localhost', 4449)
-
-#############################################
-from flask import Flask, request
+﻿from flask import Flask
 import pyodbc
-from collections import Counter
 
+# Create an instance of the Flask class that is the WSGI application.
+# The first argument is the name of the application module or package,
+# typically __name__ when using a single module.
 app = Flask(__name__)
 
+# Flask route decorators map / and /hello to the hello function.
+# To add other resources, create functions that generate the page contents
+# and add decorators to define the appropriate resource locators for them.
+
+def nav_links():
+    return """
+    <div style="margin-bottom: 20px;">
+        <a href="/" style="margin-right:15px;">Home</a>
+        <a href="/Scrabble" style="margin-right:15px;">Scrabble</a>
+        <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
+        <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
+        <a href="/hello">Hello</a>
+    </div>
+    <hr>
+    """
+
+@app.route('/')
+def home():
+    return """
+    <html>
+    <head>
+        <title>QLess Solver</title>
+        <style>
+            body {
+                font-family: Calibri, sans-serif;
+                background-color: #f5f7fa;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: auto;
+                padding: 40px;
+            }
+
+            h1 {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .subtitle {
+                text-align: center;
+                color: #555;
+                margin-bottom: 40px;
+                font-size: 18px;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 25px;
+            }
+
+            .card {
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+            }
+
+            .card h2 {
+                margin-top: 0;
+            }
+
+            .card p {
+                color: #555;
+            }
+
+            .card a {
+                display: inline-block;
+                margin-top: 15px;
+                padding: 10px 16px;
+                background-color: #0066cc;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+
+            .card a:hover {
+                background-color: #004c99;
+            }
+
+            footer {
+                text-align: center;
+                margin-top: 50px;
+                color: #888;
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="container">
+            <h1>QLess Scrabble Solver</h1>
+            <div class="subtitle">
+                Dice-based Scrabble word exploration and analysis
+            </div>
+
+            <div class="grid">
+
+                <div class="card">
+                    <h2>Scrabble Solver</h2>
+                    <p>
+                        Roll the dice and instantly see all Scrabble words
+                        that can be made from the rack.
+                    </p>
+                    <a href="/scrabble">Open Solver</a>
+                </div>
+
+                <div class="card">
+                    <h2>Top 10 Words</h2>
+                    <p>
+                        View sample words from the dictionary,
+                        including definitions and parts of speech.
+                    </p>
+                    <a href="/Top10Words">View Words</a>
+                </div>
+
+                <div class="card">
+                    <h2>12-Letter Words</h2>
+                    <p>
+                        Find all 12-letter words that can be formed
+                        from the dice in any order.
+                    </p>
+                    <a href="/12letterwords">Find 12-Letter Words</a>
+                </div>
+
+                <div class="card">
+                    <h2>Hello</h2>
+                    <p>
+                        Simple test route to confirm Flask is running.
+                    </p>
+                    <a href="/hello">Say Hello</a>
+                </div>
+
+            </div>
+
+            <footer>
+                QLess Solver • Flask and SQL Server • Built for Scrabble analysis
+            </footer>
+        </div>
+
+    </body>
+    </html>
+    """
+
+
+@app.route('/hello')
+def hello():
+   # Render the page
+   return nav_links() + f"Hello Python!"
+
+dice = [
+    "iinnoy", "dgglrr", "bllmmy", "fgkppv", "aeiouu", 
+    "bknsxz", "dfllrw", "hhpttw", "hhnnrr", "ccmstt", 
+    "bccdjt", "aaeeoo"
+]
+
+def RollDice():
+    import random
+    result = "".join([random.choice(die) for die in dice])
+    return result
+
+conn = pyodbc.connect(
+    "Driver={ODBC Driver 18 for SQL Server};"
+    "Server=localhost;"   # <- replace with your SSMS server name
+    "Database=English Words;"
+    "Trusted_Connection=yes;"
+    "Encrypt=no;"
+)
+cursor = conn.cursor()
+
+@app.route('/Top10Words')
+def Top10Words():
+
+    cursor.execute("SELECT TOP 10 * FROM [tblCSW24 - 280k]")
+    rows = cursor.fetchall()
+    
+    # Start HTML with Calibri font
+    html = """
+    <html>
+    <head>
+    <style>
+        body { font-family: Calibri, sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+    </head>
+    <body>
+    """ + nav_links() + f"""
+    <h2>Top 10 Words</h2>
+    <table>
+        <tr>
+            <th>Word</th>
+            <th>Definition</th>
+            <th>Part of Speech</th>
+            <th>Other Columns</th>
+        </tr>
+    """
+
+    # Populate table rows
+    for row in rows:
+        word = str(row[0])
+        definition = str(row[1]) if row[1] else ""
+        pos = str(row[2]) if row[2] else ""
+        other = " | ".join(str(col) for col in row[3:])  # any extra columns
+        html += f"<tr><td>{word}</td><td>{definition}</td><td>{pos}</td><td>{other}</td></tr>"
+
+    html += "</table>"
+
+    html += "<h2>Dice</h2><table><tr>" + "".join(f"<td>{d}</td>" for d in dice) + "</tr></table>"
+    html += "<h2>Roll Dice Result</h2>" + RollDice()
+
+    html += "</body></html>"
+
+    return html
+
+#############################################
+from collections import Counter
+
 def load_words():
-    conn = pyodbc.connect(
-        "Driver={ODBC Driver 18 for SQL Server};"
-        "Server=localhost;"
-        "Database=English Words;"
-        "Trusted_Connection=yes;"
-        "Encrypt=no;"
-    )
-    cursor = conn.cursor()
     cursor.execute("SELECT Word FROM [tblCSW24 - 280k]")
     return [row[0].upper() for row in cursor.fetchall()]
 
@@ -136,17 +266,7 @@ def scrabble_solve_bitmask(rack):
 
     return results
 
-def RollDice():
-    import random
-    dice = [
-        "iinnoy", "dgglrr", "bllmmy", "fgkppv", "aeiouu", 
-        "bknsxz", "dfllrw", "hhpttw", "hhnnrr", "ccmstt", 
-        "bccdjt", "aaeeoo"
-    ]
-    result = "".join([random.choice(die) for die in dice])
-    return result
-
-@app.route('/')
+@app.route('/scrabble')
 def scrabble_route():
     rack = RollDice()
 
@@ -166,9 +286,10 @@ def scrabble_route():
     </style>
     </head>
     <body>
+    """ + nav_links() + f"""
     <h2>Scrabble Words for Rack: """ + rack + """</h2>
     <table>
-        <tr><th>Word</th><th>Legnth</th></tr>
+        <tr><th>Word</th><th>Length</th></tr>
     """
 
     for w in sorted(results, key=lambda x: (-len(x), x)):
@@ -179,22 +300,7 @@ def scrabble_route():
 
 #####################################
 @app.route('/12letterwords')
-def QLessSolver():
-
-    dice = [
-        "iinnoy", 
-        "dfllrw", 
-        "dgglrr", 
-        "bllmmy", 
-        "fgkppv", 
-        "aeiouu",
-        "bknsxz", 
-        "hhpttw", 
-        "hhnnrr", 
-        "ccmstt",
-        "bccdjt", 
-        "aaeeoo"
-    ]
+def TwelveLetterWords():
 
     # ----------- Word Feasibility Checker -----------
     def can_form_word_any_order(word, dice):
@@ -242,16 +348,6 @@ def QLessSolver():
     #             return False
     #     return True
 
-    # Connect to SQL Server
-    conn = pyodbc.connect(
-        "Driver={ODBC Driver 18 for SQL Server};"
-        "Server=localhost;"
-        "Database=English Words;"
-        "Trusted_Connection=yes;"
-        "Encrypt=no;"
-    )
-    cursor = conn.cursor()
-
     # Load only 12-letter words
     cursor.execute("SELECT Word FROM [tblCSW24 - 280k] WHERE LEN(Word) = 12")
     candidates = [row[0] for row in cursor.fetchall()]
@@ -290,6 +386,7 @@ def QLessSolver():
         </style>
     </head>
     <body>
+    """ + nav_links() + f"""
         <h2>12-Letter Words Possible From Dice</h2>"""
 
     html += f"<p>Total Words Found: {len(possible)}</p>"
