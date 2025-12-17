@@ -1,7 +1,5 @@
 ﻿from flask import Flask
-import os
-
-#import pyodbc
+import pyodbc
 
 # Create an instance of the Flask class that is the WSGI application.
 # The first argument is the name of the application module or package,
@@ -16,7 +14,7 @@ def nav_links():
     return """
     <div style="margin-bottom: 20px;">
         <a href="/" style="margin-right:15px;">Home</a>
-        <a href="/scrabble" style="margin-right:15px;">Scrabble</a>
+        <a href="/Scrabble" style="margin-right:15px;">Scrabble</a>
         <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
         <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
         <a href="/hello">Hello</a>
@@ -162,6 +160,7 @@ def home():
     </html>
     """
 
+
 @app.route('/hello')
 def hello():
    # Render the page
@@ -178,31 +177,20 @@ def RollDice():
     result = "".join([random.choice(die) for die in dice])
     return result
 
-import csv
-
-def load_NWL23words():
-    NWL23words = []
-    with open("tblNWL23 - 196k.csv", newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        #print(reader.fieldnames)
-        for row in reader:
-            word = row["word"].strip().upper()
-            NWL23words.append({
-                "word": word,
-                "definition": row.get("definition", ""),
-                "partofspeech": row.get("partofspeechandalternates", ""),
-                "length": int(row.get("length", len(word))),
-                "fulltext": row.get("fulltext", "")
-            })
-    return NWL23words
-
-NWL23words = load_NWL23words()
+conn = pyodbc.connect(
+    "Driver={ODBC Driver 18 for SQL Server};"
+    "Server=localhost;"   # <- replace with your SSMS server name
+    "Database=English Words;"
+    "Trusted_Connection=yes;"
+    "Encrypt=no;"
+)
+cursor = conn.cursor()
 
 @app.route('/Top10Words')
 def Top10Words():
 
-    # cursor.execute("SELECT TOP 10 * FROM [tblCSW24 - 280k]")
-    # rows = cursor.fetchall()
+    cursor.execute("SELECT TOP 10 * FROM [tblCSW24 - 280k]")
+    rows = cursor.fetchall()
     
     # Start HTML with Calibri font
     html = """
@@ -223,22 +211,17 @@ def Top10Words():
             <th>Word</th>
             <th>Definition</th>
             <th>Part of Speech</th>
-            <th>Length</th>
-            <th>Full Text</th>
+            <th>Other Columns</th>
         </tr>
     """
 
     # Populate table rows
-    for w in NWL23words[:10]:
-        html += f"""
-        <tr>
-            <td>{w['word']}</td>
-            <td>{w['definition']}</td>
-            <td>{w['partofspeech']}</td>
-            <td>{w['length']}</td>
-            <td>{w['fulltext']}</td>
-        </tr>
-        """
+    for row in rows:
+        word = str(row[0])
+        definition = str(row[1]) if row[1] else ""
+        pos = str(row[2]) if row[2] else ""
+        other = " | ".join(str(col) for col in row[3:])  # any extra columns
+        html += f"<tr><td>{word}</td><td>{definition}</td><td>{pos}</td><td>{other}</td></tr>"
 
     html += "</table>"
 
@@ -252,14 +235,19 @@ def Top10Words():
 #############################################
 from collections import Counter
 
+def load_words():
+    cursor.execute("SELECT Word FROM [tblCSW24 - 280k]")
+    return [row[0].upper() for row in cursor.fetchall()]
+
+WORDS = load_words()
+
 def word_mask(word):
     mask = 0
-    for ch in set(word.upper()):
-        if 'A' <= ch <= 'Z':
-            mask |= 1 << (ord(ch) - 65)
+    for ch in set(word):
+        mask |= 1 << (ord(ch) - 65)
     return mask
 
-WORD_MASKS = [(w["word"], word_mask(w["word"])) for w in NWL23words]
+WORD_MASKS = [(w, word_mask(w)) for w in WORDS]
 
 def can_build_with_counts(rack, word):
     rc = Counter(rack)
@@ -361,10 +349,11 @@ def TwelveLetterWords():
     #     return True
 
     # Load only 12-letter words
-    candidates = [w for w in NWL23words if w["length"] == 12]
+    cursor.execute("SELECT Word FROM [tblCSW24 - 280k] WHERE LEN(Word) = 12")
+    candidates = [row[0] for row in cursor.fetchall()]
 
     # Filter words possible with dice
-    possible = [w for w in candidates if can_form_word_any_order(w["word"], dice)]
+    possible = [w for w in candidates if can_form_word_any_order(w, dice)]
 
     # ----------- HTML OUTPUT -----------
     html = """
@@ -410,8 +399,8 @@ def TwelveLetterWords():
             </tr>
     """
 
-    for w in sorted(possible, key=lambda x: x["word"]):
-        html += f"<tr><td>{w['word']}</td><td>{w['length']}</td></tr>"
+    for w in sorted(possible):
+        html += f"<tr><td>{w}</td><td>{len(w)}</td></tr>"
 
     html += "</table></body></html>"
     # -----------------------------------
@@ -419,5 +408,4 @@ def TwelveLetterWords():
     return html
 
 if __name__ == '__main__':
-    #app.run('localhost', 4449)
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run('localhost', 4449)
