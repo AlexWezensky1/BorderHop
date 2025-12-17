@@ -298,6 +298,7 @@ def scrabble_route():
     <body>
     """ + nav_links() + f"""
     <h2>Scrabble Words for Rack: """ + rack + """</h2>
+    Total Words Found: """ + str(len(results)) + """
     <table>
         <tr><th>Word</th><th>Length</th></tr>
     """
