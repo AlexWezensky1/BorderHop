@@ -109,36 +109,37 @@ def home():
     <body>
 
         <div class="container">
-            <h1>QLess Scrabble Solver</h1>
+            <h1>QLess Project</h1>
             <div class="subtitle">
-                Dice-based Scrabble word exploration and analysis
+                To do: 
+                <li>QLess solver - show all solutions for a specific roll</li>
+                <li>Cache all 2 billion possible rolls and their solutions</li>
+                <li>Leaderboard - most rolls solved, quickest solve, most obscure solve</li>
+                <li>Dictionary selector, explanation, and word list</li>
+                <li>Option to play with a different number of dice</li>
             </div>
 
             <div class="grid">
 
-                <div class="card">
-                    <h2>Scrabble Solver</h2>
+                <a href="/scrabble"><div class="card">
+                    <h2>Anagrams</h2>
                     <p>
-                        Roll the dice and instantly see all Scrabble words
-                        that can be made from the rack.
+                        Roll the dice and see all Scrabble words that can be made.
                     </p>
-                    <a href="/scrabble">Open Solver</a>
-                </div>
+                </div></a>
 
                 <div class="card">
-                    <h2>Top 10 Words</h2>
+                    <h2>First 10 Words</h2>
                     <p>
-                        View sample words from the dictionary,
-                        including definitions and parts of speech.
+                        View the first 10 words alphabetically of the NWL word list.
                     </p>
                     <a href="/Top10Words">View Words</a>
                 </div>
 
                 <div class="card">
-                    <h2>12-Letter Words</h2>
+                    <h2>12 Letter Words</h2>
                     <p>
-                        Find all 12-letter words that can be formed
-                        from the dice in any order.
+                        View all the 12 letter words that can be formed from the dice in any order.
                     </p>
                     <a href="/12letterwords">Find 12-Letter Words</a>
                 </div>
@@ -146,7 +147,7 @@ def home():
                 <div class="card">
                     <h2>Hello</h2>
                     <p>
-                        Simple test route to confirm Flask is running.
+                        Simple test route.
                     </p>
                     <a href="/hello">Say Hello</a>
                 </div>
@@ -154,7 +155,7 @@ def home():
             </div>
 
             <footer>
-                QLess Solver • Flask and SQL Server • Built for Scrabble analysis
+                Proudly built with no AI. Buy me a coffee! <a href="https://www.linkedin.com/in/alex-wezensky-8425b7b8/">LinkedIn</a>
             </footer>
         </div>
 
