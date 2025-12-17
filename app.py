@@ -58,7 +58,7 @@ def home():
 
             .grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(900px, 1fr));
                 gap: 25px;
             }
 
@@ -128,29 +128,26 @@ def home():
                     </p>
                 </div></a>
 
-                <div class="card">
+                <a href="/Top10Words"><div class="card">
                     <h2>First 10 Words</h2>
                     <p>
                         View the first 10 words alphabetically of the NWL word list.
                     </p>
-                    <a href="/Top10Words">View Words</a>
-                </div>
+                </div></a>
 
-                <div class="card">
+                <a href="/12letterwords"><div class="card">
                     <h2>12 Letter Words</h2>
                     <p>
                         View all the 12 letter words that can be formed from the dice in any order.
                     </p>
-                    <a href="/12letterwords">Find 12-Letter Words</a>
-                </div>
+                </div></a>
 
-                <div class="card">
+                <a href="/hello"><div class="card">
                     <h2>Hello</h2>
                     <p>
                         Simple test route.
                     </p>
-                    <a href="/hello">Say Hello</a>
-                </div>
+                </div></a>
 
             </div>
 
