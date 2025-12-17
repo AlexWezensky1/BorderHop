@@ -39,7 +39,7 @@ def home():
             }
 
             .container {
-                max-width: 900px;
+                max-width: 1500px;
                 margin: auto;
                 padding: 40px;
             }
@@ -58,7 +58,7 @@ def home():
 
             .grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(900px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 25px;
             }
 
