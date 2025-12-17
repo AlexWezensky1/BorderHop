@@ -1,1 +1,1 @@
-web: python QLessSolver/app.py
+web: gunicorn app:app
