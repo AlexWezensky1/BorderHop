@@ -1,4 +1,5 @@
-﻿from flask import Flask
+﻿from flask import Flask, render_template
+from flask import request
 import os
 
 #import pyodbc
@@ -16,7 +17,7 @@ def nav_links():
     return """
     <div style="margin-bottom: 20px;">
         <a href="/" style="margin-right:15px;">Home</a>
-        <a href="/scrabble" style="margin-right:15px;">Scrabble</a>
+        <a href="/anagrams" style="margin-right:15px;">Anagrams</a>
         <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
         <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
         <a href="/hello">Hello</a>
@@ -26,6 +27,7 @@ def nav_links():
 
 @app.route('/')
 def home():
+    #Region head
     return """
     <html>
     <head>
@@ -105,15 +107,17 @@ def home():
                 font-size: 14px;
             }
         </style>
-    </head>
+    </head>"""
+    #endregion
+    html += """
     <body>
-
         <div class="container">
             <h1>QLess Project</h1>
             <div class="subtitle">
                 To do: 
                 <li>QLess solver - show all solutions for a specific roll</li>
                 <li>Cache all 2 billion possible rolls and their solutions</li>
+                <li>Rank solution by frequency of words</li>
                 <li>Leaderboard - most rolls solved, quickest solve, most obscure solve</li>
                 <li>Dictionary selector, explanation, and word list</li>
                 <li>Option to play with a different number of dice</li>
@@ -121,10 +125,10 @@ def home():
 
             <div class="grid">
 
-                <a href="/scrabble"><div class="card">
+                <a href="/anagrams"><div class="card">
                     <h2>Anagrams</h2>
                     <p>
-                        Roll the dice and see all Scrabble words that can be made.
+                        Roll the dice and see all possible words that can be made.
                     </p>
                 </div></a>
 
@@ -264,7 +268,7 @@ def can_build_with_counts(rack, word):
     wc = Counter(word)
     return all(wc[c] <= rc[c] for c in wc)
 
-def scrabble_solve_bitmask(rack):
+def anagrams_solve_bitmask(rack):
     rack = rack.upper()
     rack_mask = word_mask(rack)
     results = []
@@ -276,16 +280,32 @@ def scrabble_solve_bitmask(rack):
 
     return results
 
-@app.route('/scrabble')
-def scrabble_route():
-    rack = RollDice()
+@app.route("/anagrams", methods=["GET", "POST"])
+def anagrams_route():
+    #rack = RollDice()
 
-    if not rack.isalpha():
-        return "<h3>Please provide rack letters using ?rack=ABCDEFG</h3>"
+    html = """<h3>Please provide rack letters using ?rack=ABCDEFG</h3>
+    <form method="POST" action="/" style="margin-bottom: 1rem;">
+        <input
+            type="text"
+            name="letters"
+            placeholder="Enter letters"
+            required
+            style="padding: 6px; font-size: 14px;"
+        >
+        <button
+            type="submit"
+            style="padding: 6px 12px; font-size: 14px;"
+        >
+            Submit
+        </button>
+    </form>"""
 
-    results = scrabble_solve_bitmask(rack)
+    if request.method == "POST":
+        rack = request.form["letters"]
+        results = anagrams_solve_bitmask(rack)
 
-    html = """
+    html += """
     <html>
     <head>
     <style>
@@ -297,7 +317,7 @@ def scrabble_route():
     </head>
     <body>
     """ + nav_links() + f"""
-    <h2>Scrabble Words for Rack: """ + rack + """</h2>
+    <h2>Possible Words: """ + rack + """</h2>
     Total Words Found: """ + str(len(results)) + """
     <table>
         <tr><th>Word</th><th>Length</th></tr>
