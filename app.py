@@ -1,14 +1,14 @@
 ﻿from flask import Flask, render_template
 from flask import request
+from collections import Counter
 import os
-
+import csv
 #import pyodbc
 
 # Create an instance of the Flask class that is the WSGI application.
 # The first argument is the name of the application module or package,
 # typically __name__ when using a single module.
 app = Flask(__name__)
-
 # Flask route decorators map / and /hello to the hello function.
 # To add other resources, create functions that generate the page contents
 # and add decorators to define the appropriate resource locators for them.
@@ -27,89 +27,25 @@ def nav_links():
 
 @app.route('/')
 def home():
-    #Region head
     return """
     <html>
     <head>
         <title>QLess Solver</title>
         <style>
-            body {
-                font-family: Calibri, sans-serif;
-                background-color: #f5f7fa;
-                margin: 0;
-                padding: 0;
-            }
-
-            .container {
-                max-width: 1500px;
-                margin: auto;
-                padding: 40px;
-            }
-
-            h1 {
-                text-align: center;
-                margin-bottom: 10px;
-            }
-
-            .subtitle {
-                text-align: center;
-                color: #555;
-                margin-bottom: 40px;
-                font-size: 18px;
-            }
-
-            .grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 25px;
-            }
-
-            .card {
-                background: white;
-                border-radius: 12px;
-                padding: 25px;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-                transition: transform 0.2s, box-shadow 0.2s;
-            }
-
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 24px rgba(0,0,0,0.15);
-            }
-
-            .card h2 {
-                margin-top: 0;
-            }
-
-            .card p {
-                color: #555;
-            }
-
-            .card a {
-                display: inline-block;
-                margin-top: 15px;
-                padding: 10px 16px;
-                background-color: #0066cc;
-                color: white;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: bold;
-            }
-
-            .card a:hover {
-                background-color: #004c99;
-            }
-
-            footer {
-                text-align: center;
-                margin-top: 50px;
-                color: #888;
-                font-size: 14px;
-            }
+            body {font-family: Calibri, sans-serif;background-color: #f5f7fa;margin: 0;padding: 0;}
+            .container {max-width: 1500px;margin: auto;padding: 40px;}
+            h1 {text-align: center;margin-bottom: 10px;}
+            .subtitle {text-align: center;color: #555;margin-bottom: 40px;font-size: 18px;}
+            .grid {display: grid;grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));gap: 25px;}
+            .card {background: white;border-radius: 12px;padding: 25px;box-shadow: 0 6px 18px rgba(0,0,0,0.1);transition: transform 0.2s, box-shadow 0.2s;}
+            .card:hover {transform: translateY(-5px);box-shadow: 0 10px 24px rgba(0,0,0,0.15);}
+            .card h2 {margin-top: 0;}
+            .card p {color: #555;}
+            .card a {display: inline-block;margin-top: 15px;padding: 10px 16px;background-color: #0066cc;color: white;text-decoration: none;border-radius: 6px;font-weight: bold;}
+            .card a:hover {background-color: #004c99;}
+            footer {text-align: center;margin-top: 50px;color: #888;font-size: 14px;}
         </style>
-    </head>"""
-    #endregion
-    html += """
+    </head>
     <body>
         <div class="container">
             <h1>QLess Project</h1>
@@ -124,42 +60,31 @@ def home():
             </div>
 
             <div class="grid">
-
                 <a href="/anagrams"><div class="card">
-                    <h2>Anagrams</h2>
-                    <p>
+                    <h2>Anagrams</h2><p>
                         Roll the dice and see all possible words that can be made.
                     </p>
                 </div></a>
-
                 <a href="/Top10Words"><div class="card">
-                    <h2>First 10 Words</h2>
-                    <p>
+                    <h2>First 10 Words</h2><p>
                         View the first 10 words alphabetically of the NWL word list.
                     </p>
                 </div></a>
-
                 <a href="/12letterwords"><div class="card">
-                    <h2>12 Letter Words</h2>
-                    <p>
+                    <h2>12 Letter Words</h2><p>
                         View all the 12 letter words that can be formed from the dice in any order.
                     </p>
                 </div></a>
-
                 <a href="/hello"><div class="card">
-                    <h2>Hello</h2>
-                    <p>
+                    <h2>Hello</h2><p>
                         Simple test route.
                     </p>
                 </div></a>
-
             </div>
-
             <footer>
                 Proudly built with no AI. Buy me a coffee! <a href="https://www.linkedin.com/in/alex-wezensky-8425b7b8/">LinkedIn</a>
             </footer>
         </div>
-
     </body>
     </html>
     """
@@ -172,15 +97,12 @@ def hello():
 dice = [
     "iinnoy", "dgglrr", "bllmmy", "fgkppv", "aeiouu", 
     "bknsxz", "dfllrw", "hhpttw", "hhnnrr", "ccmstt", 
-    "bccdjt", "aaeeoo"
-]
+    "bccdjt", "aaeeoo"]
 
 def RollDice():
     import random
     result = "".join([random.choice(die) for die in dice])
     return result
-
-import csv
 
 def load_NWL23words():
     NWL23words = []
@@ -199,6 +121,25 @@ def load_NWL23words():
     return NWL23words
 
 NWL23words = load_NWL23words()
+
+def load_WFWords():
+    WFWords = []
+    with open("tblWFWords - 5k.csv", newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        #print(reader.fieldnames)
+        for row in reader:
+            word = row["word"].strip().upper()
+            WFWords.append({
+                "word": word,
+                "rank": int(row.get("rank", "")),
+                "freq": int(row.get("freq", "")),
+                "#texts": int(row.get("#texts", "")),
+                "%caps": float(row.get("%caps", ""))
+            })
+    return WFWords
+
+WordFreq = load_WFWords()
+WordFreq_Lookup = {w["word"]: w for w in WordFreq}
 
 @app.route('/Top10Words')
 def Top10Words():
@@ -251,9 +192,6 @@ def Top10Words():
 
     return html
 
-#############################################
-from collections import Counter
-
 def word_mask(word):
     mask = 0
     for ch in set(word.upper()):
@@ -282,10 +220,14 @@ def anagrams_solve_bitmask(rack):
 
 @app.route("/anagrams", methods=["GET", "POST"])
 def anagrams_route():
-    #rack = RollDice()
+    randomrack = RollDice()
+    rack = ""
+    results = []
 
-    html = """<h3>Please provide rack letters using ?rack=ABCDEFG</h3>
-    <form method="POST" action="/" style="margin-bottom: 1rem;">
+    html = nav_links() + f"""
+    <h1>Enter your letters</h1>
+    <h3>12 random letters to test: """ + randomrack + """</h3>
+    <form method="POST" action="/anagrams" style="margin-bottom: 1rem;">
         <input
             type="text"
             name="letters"
@@ -316,28 +258,80 @@ def anagrams_route():
     </style>
     </head>
     <body>
-    """ + nav_links() + f"""
-    <h2>Possible Words: """ + rack + """</h2>
+    <h2>Possible words for """ + rack + """</h2>
     Total Words Found: """ + str(len(results)) + """
-    <table>
-        <tr><th>Word</th><th>Length</th></tr>
+    <table id="anagrams">
+        <tr><th onclick="sortTable(0)">Word</th><th onclick="sortTable(1)">Length</th><th onclick="sortTable(2)">Rank out of the top 5000 words</th></tr>
     """
 
     for w in sorted(results, key=lambda x: (-len(x), x)):
-        html += f"<tr><td>{w}</td><td>{len(w)}</td></tr>"
+        wf = WordFreq_Lookup.get(w)
+        rank = wf["rank"] if wf else ""
+        html += f"""<tr>
+                <td>{w}</td>
+                <td>{len(w)}</td>
+                <td>{rank}</td>
+            </tr>"""
 
-    html += "</table></body></html>"
+    html += """</table>
+<script>
+function sortTable(n) {
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  table = document.getElementById("anagrams");
+  switching = true;
+  dir = "asc";
+
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[n].innerHTML;
+      y = rows[i + 1].getElementsByTagName("TD")[n].innerHTML;
+
+      // convert to numbers if both x and y are numeric
+      let xNum = parseFloat(x);
+      let yNum = parseFloat(y);
+
+      if (!isNaN(xNum) && !isNaN(yNum)) {
+        if (dir == "asc" && xNum > yNum) {
+          shouldSwitch = true;
+          break;
+        } else if (dir == "desc" && xNum < yNum) {
+          shouldSwitch = true;
+          break;
+        }
+      } else {
+        // fallback to string comparison
+        if (dir == "asc" && x.toLowerCase() > y.toLowerCase()) {
+          shouldSwitch = true;
+          break;
+        } else if (dir == "desc" && x.toLowerCase() < y.toLowerCase()) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      switchcount++;
+    } else {
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+}
+</script>
+    </body></html>"""
     return html
 
-#####################################
-@app.route('/12letterwords')
-def TwelveLetterWords():
-
-    # ----------- Word Feasibility Checker -----------
+def twelve_cache_function():
     def can_form_word_any_order(word, dice):
         word = word.lower()
 
-        # Build adjacency list: letter index -> dice indices
         adj = []
         for ch in word:
             possible_dice = [i for i, d in enumerate(dice) if ch in d]
@@ -364,77 +358,42 @@ def TwelveLetterWords():
 
         return True
 
-    # def can_form_word(word):
-    #     word = word.lower()
-    #     used = [False] * len(dice)
-
-    #     for letter in word:
-    #         found = False
-    #         for i, die in enumerate(dice):
-    #             if not used[i] and letter in die:
-    #                 used[i] = True
-    #                 found = True
-    #                 break
-    #         if not found:
-    #             return False
-    #     return True
-
-    # Load only 12-letter words
     candidates = [w for w in NWL23words if w["length"] == 12]
+    return [w for w in candidates if can_form_word_any_order(w["word"], dice)]
 
-    # Filter words possible with dice
-    possible = [w for w in candidates if can_form_word_any_order(w["word"], dice)]
+TwelveLetterCache = twelve_cache_function()
 
-    # ----------- HTML OUTPUT -----------
+@app.route('/12letterwords')
+def TwelveLetterWords():
+    possible = TwelveLetterCache
+
     html = """
     <html>
     <head>
         <style>
-            body {
-                font-family: Calibri, sans-serif;
-                padding: 20px;
-            }
-            table {
-                border-collapse: collapse;
-                width: 20%;
-                font-size: 18px;
-            }
-            th, td {
-                border: 1px solid #555;
-                padding: 8px 12px;
-                text-align: left;
-            }
-            th {
-                background-color: #ddd;
-            }
-            tr:nth-child(even) {
-                background-color: #f2f2f2;
-            }
-            tr:hover {
-                background-color: #e6f3ff;
-            }
+            body {font-family: Calibri, sans-serif;padding: 20px;}
+            table {border-collapse: collapse;width: 20%;font-size: 18px;}
+            th, td {border: 1px solid #555;padding: 8px 12px;text-align: left;}
+            th {background-color: #ddd;}
+            tr:nth-child(even) {background-color: #f2f2f2;}
+            tr:hover {background-color: #e6f3ff;}
         </style>
     </head>
     <body>
-    """ + nav_links() + f"""
-        <h2>12-Letter Words Possible From Dice</h2>"""
+    """ + nav_links() + f"""<h2>12 letter words possible from dice with the NWL dictionary</h2>"""
 
     html += f"<p>Total Words Found: {len(possible)}</p>"
-
     html += """
         <table>
             <tr>
                 <th>Word</th>
                 <th>Length</th>
-            </tr>
-    """
+            </tr>"""
 
     for w in sorted(possible, key=lambda x: x["word"]):
         html += f"<tr><td>{w['word']}</td><td>{w['length']}</td></tr>"
 
     html += "</table></body></html>"
-    # -----------------------------------
-
     return html
 
 if __name__ == '__main__':
