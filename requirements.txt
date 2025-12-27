@@ -9,3 +9,4 @@ MarkupSafe
 pip
 setuptools
 Werkzeug
+pyodbc
