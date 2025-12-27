@@ -5,6 +5,8 @@ import os
 import csv
 import time
 import pyodbc
+print("IMPORT START")
+
 
 # Create an instance of the Flask class that is the WSGI application.
 # The first argument is the name of the application module or package,
@@ -211,6 +213,8 @@ def word_mask(word):
     return mask
 
 WORD_MASKS = [(w["word"], word_mask(w["word"])) for w in NWL23words]
+
+print("IMPORT END")
 
 def can_build_with_counts(rack, word):
     rc = Counter(rack)
