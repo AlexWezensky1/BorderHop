@@ -3,7 +3,8 @@ from flask import request
 from collections import Counter
 import os
 import csv
-#import pyodbc
+import time
+import pyodbc
 
 # Create an instance of the Flask class that is the WSGI application.
 # The first argument is the name of the application module or package,
@@ -20,10 +21,20 @@ def nav_links():
         <a href="/anagrams" style="margin-right:15px;">Anagrams</a>
         <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
         <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
-        <a href="/hello">Hello</a>
     </div>
     <hr>
     """
+
+conn = pyodbc.connect(
+    "DRIVER={ODBC Driver 18 for SQL Server};"
+    "SERVER=localhost;"
+    "DATABASE=English Words;"
+    "Trusted_Connection=yes;"
+    "TrustServerCertificate=yes;"
+)
+
+cursor = conn.cursor()
+cursor.fast_executemany = True
 
 @app.route('/')
 def home():
@@ -395,6 +406,81 @@ def TwelveLetterWords():
 
     html += "</table></body></html>"
     return html
+
+@app.route('/allrolls')
+def allrolls():
+    result = []
+    alphaword = word = ""
+    first = second = third = fourth = fifth = sixth = seventh = eighth = ninth = tenth = eleventh = twelfth = ""
+    dict = {}
+    count = 0
+    first = dice[0]
+    second = dice[1]
+    third = dice[2]
+    fourth = dice[3]
+    fifth = dice[4]
+    sixth = dice[5]
+    seventh = dice[6]
+    eighth = dice[7]
+    ninth = dice[8]
+    tenth = dice[9]
+    eleventh = dice[10]
+    twelfth = dice[11]
+    start = time.time()
+    counter1 = Counter()
+ 
+    for k, char1 in enumerate(first):
+        for k, char2 in enumerate(second):
+            for k, char3 in enumerate(third):
+                for k, char4 in enumerate(fourth):
+                    for k, char5 in enumerate(fifth):
+                        for k, char6 in enumerate(sixth):
+                           for k, char7 in enumerate(seventh):
+                               for k, char8 in enumerate(eighth):
+                                    for k, char9 in enumerate(ninth):
+                                        for k, char10 in enumerate(tenth):
+                                           for k, char11 in enumerate(eleventh):
+                                               for k, char12 in enumerate(twelfth):
+                                                    word = ""
+                                                    word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
+                                                    print(word)
+                                                    
+                                                    alphaword = ''.join(sorted(word))
+                                                    #dict[alphaword] = len(alphaword)
+                                                    print(alphaword)
+                                                    
+                                                    #result.append((alphaword,0,0))
+                                                    counter1[alphaword] += 1
+                                                    print(counter1)
+                                                    
+                                                    count += 1
+                                                    batchsize = 1000
+
+                                                    sql = """
+                                                    MERGE tblRolls AS target
+                                                    USING (VALUES (?, ?, ?)) AS src (roll, frequency, solutions)
+                                                    ON target.roll = src.roll
+                                                    WHEN MATCHED THEN
+                                                        UPDATE SET target.frequency = target.frequency + src.frequency
+                                                    WHEN NOT MATCHED THEN
+                                                        INSERT (roll, frequency, solutions)
+                                                        VALUES (src.roll, src.frequency, src.solutions);"""
+
+                                                    #if len(result) == batchsize:
+                                                    if sum(counter1.values()) >= batchsize:
+                                                        result = [(roll, freq, 0) for roll, freq in counter1.items()]
+                                                        cursor.executemany(sql, result)
+                                                        conn.commit()
+                                                        result.clear()
+                                                        counter1.clear()
+       
+                                                    if count == batchsize:
+                                                        end = time.time()
+                                                        return f"""Words checked: """+str(count)+""". Time elapsed: """+str((end-start))
+    #print("Words checked: " + str(count))
+    #print("Unique words: " + str(len(dict)))
+    #print(dict.keys())
+    return result
 
 if __name__ == '__main__':
     #app.run('localhost', 4449)
