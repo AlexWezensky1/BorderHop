@@ -491,11 +491,11 @@ def allrolls():
                                                     if sum(counter1.values()) >= batchsize:       
                                                         batch = [(roll, freq, 0) for roll, freq in counter1.items()]
                                                         sql = """
-                                                        INSERT INTO tblRolls (roll, frequency, solutions)
+                                                        INSERT INTO "tblRolls" (roll, frequency, solutions)
                                                         VALUES (%s, %s, %s)
                                                         ON CONFLICT (roll)
                                                         DO UPDATE SET
-                                                            frequency = tblRolls.frequency + 1;"""
+                                                            frequency = "tblRolls".frequency + 1;"""
                                                         conn = get_conn()
                                                         conn.autocommit = True
                                                         try:
