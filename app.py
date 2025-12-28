@@ -4,7 +4,9 @@ from collections import Counter
 import os
 import csv
 import time
-import pyodbc
+import psycopg2
+from psycopg2.extras import execute_batch
+#import pyodbc
 print("IMPORT START")
 
 
@@ -27,16 +29,19 @@ def nav_links():
     <hr>
     """
 
-conn = pyodbc.connect(
-    "DRIVER={ODBC Driver 18 for SQL Server};"
-    "SERVER=localhost;"
-    "DATABASE=English Words;"
-    "Trusted_Connection=yes;"
-    "TrustServerCertificate=yes;"
-)
+def get_conn():
+    return psycopg2.connect(os.environ["DATABASE_URL"])
 
-cursor = conn.cursor()
-cursor.fast_executemany = True
+# conn = pyodbc.connect(
+#     "DRIVER={ODBC Driver 18 for SQL Server};"
+#     "SERVER=localhost;"
+#     "DATABASE=English Words;"
+#     "Trusted_Connection=yes;"
+#     "TrustServerCertificate=yes;"
+# )
+
+# cursor = conn.cursor()
+# cursor.fast_executemany = True
 
 @app.route('/')
 def home():
@@ -413,7 +418,7 @@ def TwelveLetterWords():
 
 @app.route('/allrolls')
 def allrolls():
-    result = []
+    batch = []
     alphaword = word = ""
     first = second = third = fourth = fifth = sixth = seventh = eighth = ninth = tenth = eleventh = twelfth = ""
     dict = {}
@@ -439,12 +444,12 @@ def allrolls():
                 for k, char4 in enumerate(fourth):
                     for k, char5 in enumerate(fifth):
                         for k, char6 in enumerate(sixth):
-                           for k, char7 in enumerate(seventh):
-                               for k, char8 in enumerate(eighth):
+                            for k, char7 in enumerate(seventh):
+                                for k, char8 in enumerate(eighth):
                                     for k, char9 in enumerate(ninth):
                                         for k, char10 in enumerate(tenth):
-                                           for k, char11 in enumerate(eleventh):
-                                               for k, char12 in enumerate(twelfth):
+                                            for k, char11 in enumerate(eleventh):
+                                                for k, char12 in enumerate(twelfth):
                                                     word = ""
                                                     word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
                                                     print(word)
@@ -453,30 +458,36 @@ def allrolls():
                                                     #dict[alphaword] = len(alphaword)
                                                     print(alphaword)
                                                     
-                                                    #result.append((alphaword,0,0))
+                                                    #batch.append((alphaword,0,0))
                                                     counter1[alphaword] += 1
                                                     print(counter1)
                                                     
                                                     count += 1
                                                     batchsize = 1000
 
-                                                    sql = """
-                                                    MERGE tblRolls AS target
-                                                    USING (VALUES (?, ?, ?)) AS src (roll, frequency, solutions)
-                                                    ON target.roll = src.roll
-                                                    WHEN MATCHED THEN
-                                                        UPDATE SET target.frequency = target.frequency + src.frequency
-                                                    WHEN NOT MATCHED THEN
-                                                        INSERT (roll, frequency, solutions)
-                                                        VALUES (src.roll, src.frequency, src.solutions);"""
+                                                    #if len(batch) == batchsize:
+                                                    # if sum(counter1.values()) >= batchsize:
+                                                    #     batch = [(roll, freq, 0) for roll, freq in counter1.items()]
+                                                    #     cursor.executemany(sql, result)
+                                                    #     conn.commit()
+                                                    #     batch.clear()
+                                                    #     counter1.clear()
 
-                                                    #if len(result) == batchsize:
-                                                    if sum(counter1.values()) >= batchsize:
-                                                        result = [(roll, freq, 0) for roll, freq in counter1.items()]
-                                                        cursor.executemany(sql, result)
-                                                        conn.commit()
-                                                        result.clear()
-                                                        counter1.clear()
+                                                    if len(batch) >= batchsize:                                                        
+                                                        sql = """
+                                                        INSERT INTO tblrolls (roll, frequency, solutions)
+                                                        VALUES (%s, %s, %s)
+                                                        ON CONFLICT (roll)
+                                                        DO UPDATE SET
+                                                            frequency = tblrolls.frequency + 1;"""
+                                                        conn = get_conn()
+                                                        try:
+                                                            with conn.cursor() as cur:
+                                                                execute_batch(cur, sql, batch, page_size=1000)
+                                                            conn.commit()
+                                                        finally:
+                                                            conn.close()
+                                                        batch.clear()
        
                                                     if count == batchsize:
                                                         end = time.time()
