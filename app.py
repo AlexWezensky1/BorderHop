@@ -30,11 +30,10 @@ def nav_links():
     """
 
 def get_conn():
-    if "DATABASE_URL" in os.environ:
-        #Prod
-        return psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
-    else:
-        #Dev
+    db_url = os.environ.get("DATABASE_URL")
+
+    if not db_url:
+        # LOCAL DEV ONLY
         return psycopg2.connect(
             host="localhost",
             port=5432,
@@ -43,6 +42,8 @@ def get_conn():
             password="6284"
         )
 
+    # RAILWAY / PROD
+    return psycopg2.connect(db_url, sslmode="require")
 
 # conn = pyodbc.connect(
 #     "DRIVER={ODBC Driver 18 for SQL Server};"
