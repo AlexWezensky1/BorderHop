@@ -31,9 +31,11 @@ def nav_links():
 
 def get_conn():
     db_url = os.environ.get("DATABASE_URL")
+    print("DB_URL:", db_url)
 
     if not db_url:
         # LOCAL DEV ONLY
+        print("USING LOCAL POSTGRES")
         return psycopg2.connect(
             host="localhost",
             port=5432,
@@ -43,6 +45,7 @@ def get_conn():
         )
 
     # RAILWAY / PROD
+    print("USING RAILWAY DB")
     return psycopg2.connect(db_url, sslmode="require")
 
 # conn = pyodbc.connect(
