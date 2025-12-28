@@ -30,7 +30,19 @@ def nav_links():
     """
 
 def get_conn():
-    return psycopg2.connect(os.environ["DATABASE_URL"])
+    if "DATABASE_URL" in os.environ:
+        #Prod
+        return psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
+    else:
+        #Dev
+        return psycopg2.connect(
+            host="localhost",
+            port=5432,
+            dbname="English Words",
+            user="postgres",
+            password="6284"
+        )
+
 
 # conn = pyodbc.connect(
 #     "DRIVER={ODBC Driver 18 for SQL Server};"
@@ -93,11 +105,6 @@ def home():
                         View all the 12 letter words that can be formed from the dice in any order.
                     </p>
                 </div></a>
-                <a href="/hello"><div class="card">
-                    <h2>Hello</h2><p>
-                        Simple test route.
-                    </p>
-                </div></a>
             </div>
             <footer>
                 Proudly built with no AI. Buy me a coffee! <a href="https://www.linkedin.com/in/alex-wezensky-8425b7b8/">LinkedIn</a>
@@ -106,6 +113,11 @@ def home():
     </body>
     </html>
     """
+                # <a href="/hello"><div class="card">
+                #     <h2>Hello</h2><p>
+                #         Simple test route.
+                #     </p>
+                # </div></a>
 
 @app.route('/hello')
 def hello():
@@ -450,7 +462,6 @@ def allrolls():
                                         for k, char10 in enumerate(tenth):
                                             for k, char11 in enumerate(eleventh):
                                                 for k, char12 in enumerate(twelfth):
-                                                    word = ""
                                                     word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
                                                     print(word)
                                                     
@@ -463,7 +474,7 @@ def allrolls():
                                                     print(counter1)
                                                     
                                                     count += 1
-                                                    batchsize = 1000
+                                                    batchsize = 10
 
                                                     #if len(batch) == batchsize:
                                                     # if sum(counter1.values()) >= batchsize:
@@ -472,15 +483,17 @@ def allrolls():
                                                     #     conn.commit()
                                                     #     batch.clear()
                                                     #     counter1.clear()
-
-                                                    if len(batch) >= batchsize:                                                        
+                                                    print(len(counter1))
+                                                    if sum(counter1.values()) >= batchsize:       
+                                                        batch = [(roll, freq, 0) for roll, freq in counter1.items()]
                                                         sql = """
-                                                        INSERT INTO tblrolls (roll, frequency, solutions)
+                                                        INSERT INTO tblRolls (roll, frequency, solutions)
                                                         VALUES (%s, %s, %s)
                                                         ON CONFLICT (roll)
                                                         DO UPDATE SET
-                                                            frequency = tblrolls.frequency + 1;"""
+                                                            frequency = tblRolls.frequency + 1;"""
                                                         conn = get_conn()
+                                                        conn.autocommit = True
                                                         try:
                                                             with conn.cursor() as cur:
                                                                 execute_batch(cur, sql, batch, page_size=1000)
@@ -495,7 +508,7 @@ def allrolls():
     #print("Words checked: " + str(count))
     #print("Unique words: " + str(len(dict)))
     #print(dict.keys())
-    return result
+    return counter1
 
 if __name__ == '__main__':
     #app.run('localhost', 4449)
