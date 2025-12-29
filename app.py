@@ -435,6 +435,25 @@ def TwelveLetterWords():
     html += "</table></body></html>"
     return html
 
+@app.route('/runsql')
+def runsql():
+    sql = """
+    DROP TABLE tblrollprogress;
+    CREATE TABLE tblrollprogress (
+    id INTEGER PRIMARY KEY,
+    dice_index BIGINT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
+    );"""
+    conn = get_conn()
+    conn.autocommit = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+    finally:
+        conn.close()
+    return "SQL executed: " + sql
+
 @app.route('/deletefromtblrolls')
 def runsql():
     sql = """
