@@ -25,6 +25,9 @@ def nav_links():
         <a href="/anagrams" style="margin-right:15px;">Anagrams</a>
         <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
         <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
+        <a href="/allrolls" style="margin-right:15px;">Insert 1000 rolls into tblrolls</a>
+        <a href="/rolls" style="margin-right:15px;">View first page of rolls</a>
+        <a href="/deletefromtblrolls" style="margin-right:15px;">Delete tblrolls</a>
     </div>
     <hr>
     """
