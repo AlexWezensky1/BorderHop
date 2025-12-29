@@ -50,7 +50,6 @@ def load_progress(conn):
         row = cur.fetchone()
 
         if row is None:
-            # First run — initialize progress
             cur.execute(
                 "INSERT INTO roll_progress (id, dice_index) VALUES (1, 0)"
             )
