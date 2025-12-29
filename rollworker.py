@@ -46,13 +46,13 @@ def get_conn():
 
 def load_progress(conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT dice_index FROM tblRollProgress WHERE id=1")
+        cur.execute("SELECT dice_index FROM tblrollprogress WHERE id=1")
         return cur.fetchone()[0]
 
 def save_progress(conn, idx):
     with conn.cursor() as cur:
         cur.execute("""
-            UPDATE tblRollProgress
+            UPDATE tblrollprogress
             SET dice_index = %s, updated_at = now()
             WHERE id = 1
         """, (idx,))
@@ -74,10 +74,10 @@ def worker():
             batch = [(k, v, 0) for k, v in counter.items()]
             with conn.cursor() as cur:
                 execute_batch(cur, """
-                    INSERT INTO tblRolls (roll, frequency, solutions)
+                    INSERT INTO tblrolls (roll, frequency, solutions)
                     VALUES (%s, %s, %s)
                     ON CONFLICT (roll)
-                    DO UPDATE SET frequency = tblRolls.frequency + EXCLUDED.frequency
+                    DO UPDATE SET frequency = tblrolls.frequency + EXCLUDED.frequency
                 """, batch)
             conn.commit()
             counter.clear()
@@ -91,10 +91,10 @@ def worker():
         batch = [(k, v, 0) for k, v in counter.items()]
         with conn.cursor() as cur:
             execute_batch(cur, """
-                INSERT INTO tblRolls (roll, frequency, solutions)
+                INSERT INTO tblrolls (roll, frequency, solutions)
                 VALUES (%s, %s, %s)
                 ON CONFLICT (roll)
-                DO UPDATE SET frequency = tblRolls.frequency + EXCLUDED.frequency
+                DO UPDATE SET frequency = tblrolls.frequency + EXCLUDED.frequency
             """, batch)
         conn.commit()
 
