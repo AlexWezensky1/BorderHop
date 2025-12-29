@@ -432,6 +432,20 @@ def TwelveLetterWords():
     html += "</table></body></html>"
     return html
 
+@app.route('/runsql')
+def runsql():
+    sql = """
+    CREATE INDEX idx_tblrolls_roll ON tblrolls (roll);"""
+    conn = get_conn()
+    conn.autocommit = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+    finally:
+        conn.close()
+    return "SQL executed: " + sql
+
 @app.route('/allrolls')
 def allrolls():
     batch = []
@@ -512,6 +526,36 @@ def allrolls():
     #print("Unique words: " + str(len(dict)))
     #print(dict.keys())
     return counter1
+
+@app.route("/rolls")
+def rolls():
+    page = int(request.args.get("page", 1))
+    page_size = 100
+    offset = (page - 1) * page_size
+
+    conn = get_conn()
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT roll, frequency, solutions
+            FROM tblrolls
+            ORDER BY roll
+            LIMIT %s OFFSET %s
+        """, (page_size, offset))
+        rows = cur.fetchall()
+
+        cur.execute("SELECT COUNT(*) FROM tblrolls")
+        total_rows = cur.fetchone()[0]
+
+    conn.close()
+
+    total_pages = (total_rows + page_size - 1) // page_size
+
+    return render_template(
+        "rolls.html",
+        rows=rows,
+        page=page,
+        total_pages=total_pages
+    )
 
 if __name__ == '__main__':
     #app.run('localhost', 4449)

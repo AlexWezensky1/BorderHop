@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rolls</title>
+    <style>
+        body {
+            font-family: Calibri, sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            padding: 6px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .pager {
+            margin-top: 15px;
+        }
+
+            .pager a {
+                margin-right: 10px;
+            }
+    </style>
+</head>
+<body>
+
+    <h2>Rolls – Page {{ page }} of {{ total_pages }}</h2>
+
+    <table>
+        <tr>
+            <th>Roll</th>
+            <th>Frequency</th>
+            <th>Solutions</th>
+        </tr>
+
+        {% for roll, frequency, solutions in rows %}
+        <tr>
+            <td>{{ roll }}</td>
+            <td>{{ frequency }}</td>
+            <td>{{ solutions }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="pager">
+        {% if page > 1 %}
+        <a href="/rolls?page={{ page - 1 }}">Previous</a>
+        {% endif %}
+
+        {% if page < total_pages %}
+        <a href="/rolls?page={{ page + 1 }}">Next</a>
+        {% endif %}
+    </div>
+
+</body>
+</html>
