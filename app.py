@@ -432,10 +432,10 @@ def TwelveLetterWords():
     html += "</table></body></html>"
     return html
 
-@app.route('/runsql')
+@app.route('/deletefromtblrolls')
 def runsql():
     sql = """
-    CREATE INDEX idx_tblrolls_roll ON tblrolls (roll);"""
+    delete from tblrolls;"""
     conn = get_conn()
     conn.autocommit = True
     try:
