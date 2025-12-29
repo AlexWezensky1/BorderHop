@@ -440,7 +440,8 @@ def allrolls():
     conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            execute_batch(cur, sql, batch, page_size=1000)
+            execute_batch(cur, sql)
+            #execute_batch(cur, sql, batch, page_size=1000)
         conn.commit()
     finally:
         conn.close()
