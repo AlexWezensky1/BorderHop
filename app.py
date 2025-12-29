@@ -455,7 +455,7 @@ def runsql():
     return "SQL executed: " + sql
 
 @app.route('/deletefromtblrolls')
-def runsql():
+def deletefromtblrolls():
     sql = """
     delete from tblrolls;"""
     conn = get_conn()
