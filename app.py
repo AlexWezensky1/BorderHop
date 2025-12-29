@@ -438,12 +438,11 @@ def TwelveLetterWords():
 @app.route('/runsql')
 def runsql():
     sql = """
-    DROP TABLE tblrollprogress;
-    CREATE TABLE tblrollprogress (
-    id INTEGER PRIMARY KEY,
-    dice_index BIGINT NOT NULL,
-    updated_at TIMESTAMP NOT NULL DEFAULT now()
-    );"""
+    DELETE FROM tblrolls
+    WHERE ctid IN (
+        SELECT ctid FROM tblrolls LIMIT 200000
+    );
+    """
     conn = get_conn()
     conn.autocommit = True
     try:
