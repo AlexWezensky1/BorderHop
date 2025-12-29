@@ -46,12 +46,12 @@ def get_conn():
 
 def load_progress(conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT dice_index FROM roll_progress WHERE id = 1")
+        cur.execute("SELECT dice_index FROM tblrollprogress WHERE id = 1")
         row = cur.fetchone()
 
         if row is None:
             cur.execute(
-                "INSERT INTO roll_progress (id, dice_index) VALUES (1, 0)"
+                "INSERT INTO tblrollprogress (id, dice_index) VALUES (1, 0)"
             )
             conn.commit()
             return 0
