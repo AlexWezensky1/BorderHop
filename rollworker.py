@@ -46,8 +46,18 @@ def get_conn():
 
 def load_progress(conn):
     with conn.cursor() as cur:
-        cur.execute("SELECT dice_index FROM tblrollprogress WHERE id=1")
-        return cur.fetchone()[0]
+        cur.execute("SELECT dice_index FROM roll_progress WHERE id = 1")
+        row = cur.fetchone()
+
+        if row is None:
+            # First run — initialize progress
+            cur.execute(
+                "INSERT INTO roll_progress (id, dice_index) VALUES (1, 0)"
+            )
+            conn.commit()
+            return 0
+
+        return row[0]
 
 def save_progress(conn, idx):
     with conn.cursor() as cur:
