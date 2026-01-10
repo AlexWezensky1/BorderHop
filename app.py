@@ -438,10 +438,7 @@ def TwelveLetterWords():
 @app.route('/runsql')
 def runsql():
     sql = """
-    DELETE FROM tblrolls
-    WHERE ctid IN (
-        SELECT ctid FROM tblrolls LIMIT 200000
-    );
+    DELETE FROM tblrollprogress;
     """
     conn = get_conn()
     conn.autocommit = True
