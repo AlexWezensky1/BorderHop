@@ -18,6 +18,9 @@ app = Flask(__name__)
 # To add other resources, create functions that generate the page contents
 # and add decorators to define the appropriate resource locators for them.
 
+        # <a href="/allrolls" style="margin-right:15px;">Insert 1000 rolls into tblrolls</a>
+        # <a href="/deletefromtblrolls" style="margin-right:15px;">Delete tblrolls</a>
+
 def nav_links():
     return """
     <div style="margin-bottom: 20px;">
@@ -25,9 +28,7 @@ def nav_links():
         <a href="/anagrams" style="margin-right:15px;">Anagrams</a>
         <a href="/Top10Words" style="margin-right:15px;">Top 10 Words</a>
         <a href="/12letterwords" style="margin-right:15px;">12-Letter Words</a>
-        <a href="/allrolls" style="margin-right:15px;">Insert 1000 rolls into tblrolls</a>
         <a href="/rolls" style="margin-right:15px;">View first page of rolls</a>
-        <a href="/deletefromtblrolls" style="margin-right:15px;">Delete tblrolls</a>
     </div>
     <hr>
     """
@@ -464,86 +465,86 @@ def TwelveLetterWords():
 #         conn.close()
 #     return "SQL executed: " + sql
 
-@app.route('/allrolls')
-def allrolls():
-    batch = []
-    alphaword = word = ""
-    first = second = third = fourth = fifth = sixth = seventh = eighth = ninth = tenth = eleventh = twelfth = ""
-    dict = {}
-    count = 0
-    first = dice[0]
-    second = dice[1]
-    third = dice[2]
-    fourth = dice[3]
-    fifth = dice[4]
-    sixth = dice[5]
-    seventh = dice[6]
-    eighth = dice[7]
-    ninth = dice[8]
-    tenth = dice[9]
-    eleventh = dice[10]
-    twelfth = dice[11]
-    start = time.time()
-    counter1 = Counter()
+# @app.route('/allrolls')
+# def allrolls():
+#     batch = []
+#     alphaword = word = ""
+#     first = second = third = fourth = fifth = sixth = seventh = eighth = ninth = tenth = eleventh = twelfth = ""
+#     dict = {}
+#     count = 0
+#     first = dice[0]
+#     second = dice[1]
+#     third = dice[2]
+#     fourth = dice[3]
+#     fifth = dice[4]
+#     sixth = dice[5]
+#     seventh = dice[6]
+#     eighth = dice[7]
+#     ninth = dice[8]
+#     tenth = dice[9]
+#     eleventh = dice[10]
+#     twelfth = dice[11]
+#     start = time.time()
+#     counter1 = Counter()
  
-    for k, char1 in enumerate(first):
-        for k, char2 in enumerate(second):
-            for k, char3 in enumerate(third):
-                for k, char4 in enumerate(fourth):
-                    for k, char5 in enumerate(fifth):
-                        for k, char6 in enumerate(sixth):
-                            for k, char7 in enumerate(seventh):
-                                for k, char8 in enumerate(eighth):
-                                    for k, char9 in enumerate(ninth):
-                                        for k, char10 in enumerate(tenth):
-                                            for k, char11 in enumerate(eleventh):
-                                                for k, char12 in enumerate(twelfth):
-                                                    word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
-                                                    print(word)
+#     for k, char1 in enumerate(first):
+#         for k, char2 in enumerate(second):
+#             for k, char3 in enumerate(third):
+#                 for k, char4 in enumerate(fourth):
+#                     for k, char5 in enumerate(fifth):
+#                         for k, char6 in enumerate(sixth):
+#                             for k, char7 in enumerate(seventh):
+#                                 for k, char8 in enumerate(eighth):
+#                                     for k, char9 in enumerate(ninth):
+#                                         for k, char10 in enumerate(tenth):
+#                                             for k, char11 in enumerate(eleventh):
+#                                                 for k, char12 in enumerate(twelfth):
+#                                                     word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
+#                                                     print(word)
                                                     
-                                                    alphaword = ''.join(sorted(word))
-                                                    #dict[alphaword] = len(alphaword)
-                                                    print(alphaword)
+#                                                     alphaword = ''.join(sorted(word))
+#                                                     #dict[alphaword] = len(alphaword)
+#                                                     print(alphaword)
                                                     
-                                                    #batch.append((alphaword,0,0))
-                                                    counter1[alphaword] += 1
-                                                    print(counter1)
+#                                                     #batch.append((alphaword,0,0))
+#                                                     counter1[alphaword] += 1
+#                                                     print(counter1)
                                                     
-                                                    count += 1
-                                                    batchsize = 1000
+#                                                     count += 1
+#                                                     batchsize = 1000
 
-                                                    #if len(batch) == batchsize:
-                                                    # if sum(counter1.values()) >= batchsize:
-                                                    #     batch = [(roll, freq, 0) for roll, freq in counter1.items()]
-                                                    #     cursor.executemany(sql, result)
-                                                    #     conn.commit()
-                                                    #     batch.clear()
-                                                    #     counter1.clear()
-                                                    print(len(counter1))
-                                                    if sum(counter1.values()) >= batchsize:       
-                                                        batch = [(roll, freq, 0) for roll, freq in counter1.items()]
-                                                        sql = """
-                                                        INSERT INTO tblrolls (roll, frequency, solutions)
-                                                        VALUES (%s, %s, %s)
-                                                        ON CONFLICT (roll)
-                                                        DO UPDATE SET frequency = tblrolls.frequency + EXCLUDED.frequency;"""
-                                                        conn = get_conn()
-                                                        conn.autocommit = True
-                                                        try:
-                                                            with conn.cursor() as cur:
-                                                                execute_batch(cur, sql, batch, page_size=1000)
-                                                            conn.commit()
-                                                        finally:
-                                                            conn.close()
-                                                        batch.clear()
+#                                                     #if len(batch) == batchsize:
+#                                                     # if sum(counter1.values()) >= batchsize:
+#                                                     #     batch = [(roll, freq, 0) for roll, freq in counter1.items()]
+#                                                     #     cursor.executemany(sql, result)
+#                                                     #     conn.commit()
+#                                                     #     batch.clear()
+#                                                     #     counter1.clear()
+#                                                     print(len(counter1))
+#                                                     if sum(counter1.values()) >= batchsize:       
+#                                                         batch = [(roll, freq, 0) for roll, freq in counter1.items()]
+#                                                         sql = """
+#                                                         INSERT INTO tblrolls (roll, frequency, solutions)
+#                                                         VALUES (%s, %s, %s)
+#                                                         ON CONFLICT (roll)
+#                                                         DO UPDATE SET frequency = tblrolls.frequency + EXCLUDED.frequency;"""
+#                                                         conn = get_conn()
+#                                                         conn.autocommit = True
+#                                                         try:
+#                                                             with conn.cursor() as cur:
+#                                                                 execute_batch(cur, sql, batch, page_size=1000)
+#                                                             conn.commit()
+#                                                         finally:
+#                                                             conn.close()
+#                                                         batch.clear()
        
-                                                    if count == batchsize:
-                                                        end = time.time()
-                                                        return f"""Words checked: """+str(count)+""". Time elapsed: """+str((end-start))
-    #print("Words checked: " + str(count))
-    #print("Unique words: " + str(len(dict)))
-    #print(dict.keys())
-    return counter1
+#                                                     if count == batchsize:
+#                                                         end = time.time()
+#                                                         return f"""Words checked: """+str(count)+""". Time elapsed: """+str((end-start))
+#     #print("Words checked: " + str(count))
+#     #print("Unique words: " + str(len(dict)))
+#     #print(dict.keys())
+#     return counter1
 
 @app.route("/rolls")
 def rolls():
