@@ -22,8 +22,8 @@ def index_to_roll(idx):
         letters.append(die[r])
     return ''.join(reversed(letters))
 
-BATCH_SIZE = 500
-CHECKPOINT_EVERY = 10000
+BATCH_SIZE = 5000
+CHECKPOINT_EVERY = 100000
 
 def get_conn():
     db_url = os.environ.get("DATABASE_URL")
