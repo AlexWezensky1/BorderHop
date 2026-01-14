@@ -283,7 +283,7 @@ def anagrams_solve_bitmask_CSW(rack):
 @app.route("/anagrams", methods=["GET", "POST"])
 def anagrams_route():
     randomrack = RollDice()
-    rack = ""
+    rack = dictver = ""
     results = []
 
     html = nav_links() + """
