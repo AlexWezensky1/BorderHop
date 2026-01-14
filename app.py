@@ -23,6 +23,9 @@ app = Flask(__name__)
 
 def nav_links():
     return """
+    <style>
+        body {font-family: Helvetica, sans-serif;background-color: #f5f7fa;margin: 0;padding: 0;}
+    </style>
     <div style="margin-bottom: 20px;">
         <a href="/" style="margin-right:15px;">Home</a>
         <a href="/anagrams" style="margin-right:15px;">Anagrams</a>
@@ -156,7 +159,7 @@ NWL23words = load_NWL23words()
 
 def load_CSW24words():
     CSW24words = []
-    with open("tblCSW24 - 280k.csv", newline="", encoding="utf-8-sig") as f:
+    with open("tblCSW24 -280k.csv", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         #print(reader.fieldnames)
         for row in reader:
@@ -243,7 +246,8 @@ def word_mask(word):
             mask |= 1 << (ord(ch) - 65)
     return mask
 
-WORD_MASKS = [(w["word"], word_mask(w["word"])) for w in NWL23words]
+WORD_MASKS_NWL = [(w["word"], word_mask(w["word"])) for w in NWL23words]
+WORD_MASKS_CSW = [(w["word"], word_mask(w["word"])) for w in CSW24words]
 
 print("IMPORT END")
 
@@ -252,12 +256,24 @@ def can_build_with_counts(rack, word):
     wc = Counter(word)
     return all(wc[c] <= rc[c] for c in wc)
 
-def anagrams_solve_bitmask(rack):
+def anagrams_solve_bitmask_NWL(rack):
     rack = rack.upper()
     rack_mask = word_mask(rack)
     results = []
 
-    for word, wmask in WORD_MASKS:
+    for word, wmask in WORD_MASKS_NWL:
+        if (wmask & rack_mask) == wmask:
+            if can_build_with_counts(rack, word):
+                results.append(word)
+
+    return results
+
+def anagrams_solve_bitmask_CSW(rack):
+    rack = rack.upper()
+    rack_mask = word_mask(rack)
+    results = []
+
+    for word, wmask in WORD_MASKS_CSW:
         if (wmask & rack_mask) == wmask:
             if can_build_with_counts(rack, word):
                 results.append(word)
@@ -270,7 +286,16 @@ def anagrams_route():
     rack = ""
     results = []
 
-    html = nav_links() + f"""
+    html = nav_links() + """
+    <html>
+        <head>
+            <style>
+                body { font-family: Helvetica, sans-serif; }
+                table { border-collapse: collapse; width: 50%; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
     <h1>Enter your letters</h1>
     <h3>12 random letters to test: """ + randomrack + """</h3>
     <form method="POST" action="/anagrams" style="margin-bottom: 1rem;">
@@ -281,6 +306,10 @@ def anagrams_route():
             required
             style="padding: 6px; font-size: 14px;"
         >
+        <select name="dict" id="dict">
+            <option value="Collins Scrabble Word Dictionary">Collins Scrabble Word Dictionary</option>
+            <option value="NASPA Word List">NASPA Word List</option>
+        </select>
         <button
             type="submit"
             style="padding: 6px 12px; font-size: 14px;"
@@ -291,23 +320,23 @@ def anagrams_route():
 
     if request.method == "POST":
         rack = request.form["letters"]
-        results = anagrams_solve_bitmask(rack)
+        dictver = request.form["dict"]
+        if dictver == "NASPA Word List":
+            results = anagrams_solve_bitmask_NWL(rack)
+        if dictver == "Collins Scrabble Word Dictionary":
+            results = anagrams_solve_bitmask_CSW(rack)
 
     html += """
-    <html>
-    <head>
-    <style>
-        body { font-family: Helvetica, sans-serif; }
-        table { border-collapse: collapse; width: 50%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
-    </head>
     <body>
-    <h2>Possible words for """ + rack + """</h2>
+
+    <h2>Possible words for """ + rack + """ using the """ + dictver + """</h2>
     Total Words Found: """ + str(len(results)) + """
     <table id="anagrams">
-        <tr><th onclick="sortTable(0)">Word</th><th onclick="sortTable(1)">Length</th><th onclick="sortTable(2)">Rank out of the top 5000 words</th></tr>
+    <tr>
+        <th onclick="sortTable(0)">Word</th>
+        <th onclick="sortTable(1)">Length</th>
+        <th onclick="sortTable(2)">Rank out of the top 5000 words</th>
+    </tr>
     """
 
     for w in sorted(results, key=lambda x: (-len(x), x)):
@@ -320,57 +349,47 @@ def anagrams_route():
             </tr>"""
 
     html += """</table>
-<script>
-function sortTable(n) {
-  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-  table = document.getElementById("anagrams");
-  switching = true;
-  dir = "asc";
 
-  while (switching) {
-    switching = false;
-    rows = table.rows;
-    for (i = 1; i < (rows.length - 1); i++) {
-      shouldSwitch = false;
-      x = rows[i].getElementsByTagName("TD")[n].innerHTML;
-      y = rows[i + 1].getElementsByTagName("TD")[n].innerHTML;
+        <script>
+        function sortTable(colIndex) {
+            const table = document.getElementById("anagrams");
+            let switching = true;
+            let dir = table.getAttribute("data-sort-dir") || "asc";
 
-      // convert to numbers if both x and y are numeric
-      let xNum = parseFloat(x);
-      let yNum = parseFloat(y);
+            while (switching) {
+                switching = false;
+                const rows = table.rows;
 
-      if (!isNaN(xNum) && !isNaN(yNum)) {
-        if (dir == "asc" && xNum > yNum) {
-          shouldSwitch = true;
-          break;
-        } else if (dir == "desc" && xNum < yNum) {
-          shouldSwitch = true;
-          break;
+                for (let i = 1; i < rows.length - 1; i++) {
+                    let shouldSwitch = false;
+
+                    let x = rows[i].cells[colIndex].textContent.trim();
+                    let y = rows[i + 1].cells[colIndex].textContent.trim();
+
+                    let xNum = Number(x);
+                    let yNum = Number(y);
+
+                    if (!Number.isNaN(xNum) && !Number.isNaN(yNum)) {
+                        if (dir === "asc" && xNum > yNum) shouldSwitch = true;
+                        if (dir === "desc" && xNum < yNum) shouldSwitch = true;
+                    } else {
+                        if (dir === "asc" && x.localeCompare(y) > 0) shouldSwitch = true;
+                        if (dir === "desc" && x.localeCompare(y) < 0) shouldSwitch = true;
+                    }
+
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                        break;
+                    }
+                }
+            }
+
+            dir = dir === "asc" ? "desc" : "asc";
+            table.setAttribute("data-sort-dir", dir);
         }
-      } else {
-        // fallback to string comparison
-        if (dir == "asc" && x.toLowerCase() > y.toLowerCase()) {
-          shouldSwitch = true;
-          break;
-        } else if (dir == "desc" && x.toLowerCase() < y.toLowerCase()) {
-          shouldSwitch = true;
-          break;
-        }
-      }
-    }
-    if (shouldSwitch) {
-      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-      switching = true;
-      switchcount++;
-    } else {
-      if (switchcount == 0 && dir == "asc") {
-        dir = "desc";
-        switching = true;
-      }
-    }
-  }
-}
-</script>
+        </script>
+
     </body></html>"""
     return html
 
