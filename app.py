@@ -509,6 +509,36 @@ def rolls():
         total_pages=total_pages
     )
 
+@app.route("/api/rolls")
+def infinitescrolls():
+    page = int(request.args.get("page", 1))
+    limit = 50
+    offset = (page - 1) * limit
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT roll, frequency, solutions
+        FROM tblrolls
+        ORDER BY roll
+        OFFSET %s
+        LIMIT %s
+    """, (offset, limit))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return jsonify([
+        {
+            "roll": r[0],
+            "frequency": r[1],
+            "solutions": r[2]
+        }
+        for r in rows
+    ])
+
 if __name__ == '__main__':
     #app.run('localhost', 4449)
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
