@@ -4,7 +4,7 @@
     <title>Rolls</title>
     <style>
         body {
-            font-family: Calibri, sans-serif;
+            font-family: Helvetica, sans-serif;
         }
 
         table {
@@ -60,5 +60,22 @@
         {% endif %}
     </div>
 
+    <table id="rolls-table">
+        <thead>
+            <tr>
+                <th>Roll</th>
+                <th>Frequency</th>
+                <th>Solutions</th>
+            </tr>
+        </thead>
+        <tbody id="rolls-body"></tbody>
+    </table>
+
+    <div id="loading" style="display:none">Loading</div>
+
+    <script src="/static/rolls.js"></script>
+
 </body>
+
+
 </html>

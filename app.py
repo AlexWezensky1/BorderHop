@@ -1,4 +1,4 @@
-﻿from flask import Flask, render_template
+﻿from flask import Flask, render_template, jsonify
 from flask import request
 from collections import Counter
 import os
@@ -70,7 +70,7 @@ def home():
     <head>
         <title>QLess Solver</title>
         <style>
-            body {font-family: Calibri, sans-serif;background-color: #f5f7fa;margin: 0;padding: 0;}
+            body {font-family: Helvetica, sans-serif;background-color: #f5f7fa;margin: 0;padding: 0;}
             .container {max-width: 1500px;margin: auto;padding: 40px;}
             h1 {text-align: center;margin-bottom: 10px;}
             .subtitle {text-align: center;color: #555;margin-bottom: 40px;font-size: 18px;}
@@ -121,11 +121,6 @@ def home():
     </body>
     </html>
     """
-                # <a href="/hello"><div class="card">
-                #     <h2>Hello</h2><p>
-                #         Simple test route.
-                #     </p>
-                # </div></a>
 
 @app.route('/hello')
 def hello():
@@ -157,8 +152,24 @@ def load_NWL23words():
                 "fulltext": row.get("fulltext", "")
             })
     return NWL23words
-
 NWL23words = load_NWL23words()
+
+def load_CSW24words():
+    CSW24words = []
+    with open("tblCSW24 - 280k.csv", newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        #print(reader.fieldnames)
+        for row in reader:
+            word = row["word"].strip().upper()
+            CSW24words.append({
+                "word": word,
+                "definition": row.get("definition", ""),
+                "partofspeech": row.get("partofspeechandalternates", ""),
+                "length": int(row.get("length", len(word))),
+                "fulltext": row.get("fulltext", "")
+            })
+    return CSW24words
+CSW24words = load_CSW24words()
 
 def load_WFWords():
     WFWords = []
@@ -175,22 +186,17 @@ def load_WFWords():
                 "%caps": float(row.get("%caps", ""))
             })
     return WFWords
-
 WordFreq = load_WFWords()
 WordFreq_Lookup = {w["word"]: w for w in WordFreq}
 
 @app.route('/Top10Words')
 def Top10Words():
-
-    # cursor.execute("SELECT TOP 10 * FROM [tblCSW24 - 280k]")
-    # rows = cursor.fetchall()
     
-    # Start HTML with Calibri font
     html = """
     <html>
     <head>
     <style>
-        body { font-family: Calibri, sans-serif; }
+        body { font-family: Helvetica, sans-serif; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
@@ -291,7 +297,7 @@ def anagrams_route():
     <html>
     <head>
     <style>
-        body { font-family: Calibri, sans-serif; }
+        body { font-family: Helvetica, sans-serif; }
         table { border-collapse: collapse; width: 50%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
@@ -411,7 +417,7 @@ def TwelveLetterWords():
     <html>
     <head>
         <style>
-            body {font-family: Calibri, sans-serif;padding: 20px;}
+            body {font-family: Helvetica, sans-serif;padding: 20px;}
             table {border-collapse: collapse;width: 20%;font-size: 18px;}
             th, td {border: 1px solid #555;padding: 8px 12px;text-align: left;}
             th {background-color: #ddd;}
@@ -436,138 +442,46 @@ def TwelveLetterWords():
     html += "</table></body></html>"
     return html
 
-# @app.route('/runsql')
-# def runsql():
-#     sql = """
-#     DELETE FROM tblrollprogress;
-#     """
-#     conn = get_conn()
-#     conn.autocommit = True
-#     try:
-#         with conn.cursor() as cur:
-#             cur.execute(sql)
-#         conn.commit()
-#     finally:
-#         conn.close()
-#     return "SQL executed: " + sql
-
-# @app.route('/deletefromtblrolls')
-# def deletefromtblrolls():
-#     sql = """
-#     delete from tblrolls;"""
-#     conn = get_conn()
-#     conn.autocommit = True
-#     try:
-#         with conn.cursor() as cur:
-#             cur.execute(sql)
-#         conn.commit()
-#     finally:
-#         conn.close()
-#     return "SQL executed: " + sql
-
-# @app.route('/allrolls')
-# def allrolls():
-#     batch = []
-#     alphaword = word = ""
-#     first = second = third = fourth = fifth = sixth = seventh = eighth = ninth = tenth = eleventh = twelfth = ""
-#     dict = {}
-#     count = 0
-#     first = dice[0]
-#     second = dice[1]
-#     third = dice[2]
-#     fourth = dice[3]
-#     fifth = dice[4]
-#     sixth = dice[5]
-#     seventh = dice[6]
-#     eighth = dice[7]
-#     ninth = dice[8]
-#     tenth = dice[9]
-#     eleventh = dice[10]
-#     twelfth = dice[11]
-#     start = time.time()
-#     counter1 = Counter()
- 
-#     for k, char1 in enumerate(first):
-#         for k, char2 in enumerate(second):
-#             for k, char3 in enumerate(third):
-#                 for k, char4 in enumerate(fourth):
-#                     for k, char5 in enumerate(fifth):
-#                         for k, char6 in enumerate(sixth):
-#                             for k, char7 in enumerate(seventh):
-#                                 for k, char8 in enumerate(eighth):
-#                                     for k, char9 in enumerate(ninth):
-#                                         for k, char10 in enumerate(tenth):
-#                                             for k, char11 in enumerate(eleventh):
-#                                                 for k, char12 in enumerate(twelfth):
-#                                                     word = char1 + char2 + char3 + char4 + char5 + char6 + char7 + char8 + char9 + char10 + char11 + char12
-#                                                     print(word)
-                                                    
-#                                                     alphaword = ''.join(sorted(word))
-#                                                     #dict[alphaword] = len(alphaword)
-#                                                     print(alphaword)
-                                                    
-#                                                     #batch.append((alphaword,0,0))
-#                                                     counter1[alphaword] += 1
-#                                                     print(counter1)
-                                                    
-#                                                     count += 1
-#                                                     batchsize = 1000
-
-#                                                     #if len(batch) == batchsize:
-#                                                     # if sum(counter1.values()) >= batchsize:
-#                                                     #     batch = [(roll, freq, 0) for roll, freq in counter1.items()]
-#                                                     #     cursor.executemany(sql, result)
-#                                                     #     conn.commit()
-#                                                     #     batch.clear()
-#                                                     #     counter1.clear()
-#                                                     print(len(counter1))
-#                                                     if sum(counter1.values()) >= batchsize:       
-#                                                         batch = [(roll, freq, 0) for roll, freq in counter1.items()]
-#                                                         sql = """
-#                                                         INSERT INTO tblrolls (roll, frequency, solutions)
-#                                                         VALUES (%s, %s, %s)
-#                                                         ON CONFLICT (roll)
-#                                                         DO UPDATE SET frequency = tblrolls.frequency + EXCLUDED.frequency;"""
-#                                                         conn = get_conn()
-#                                                         conn.autocommit = True
-#                                                         try:
-#                                                             with conn.cursor() as cur:
-#                                                                 execute_batch(cur, sql, batch, page_size=1000)
-#                                                             conn.commit()
-#                                                         finally:
-#                                                             conn.close()
-#                                                         batch.clear()
-       
-#                                                     if count == batchsize:
-#                                                         end = time.time()
-#                                                         return f"""Words checked: """+str(count)+""". Time elapsed: """+str((end-start))
-#     #print("Words checked: " + str(count))
-#     #print("Unique words: " + str(len(dict)))
-#     #print(dict.keys())
-#     return counter1
-
 @app.route("/rolls")
 def rolls():
     page = int(request.args.get("page", 1))
-    page_size = 100
-    offset = (page - 1) * page_size
+    page_size = 50
+    #offset = (page - 1) * page_size
 
     conn = get_conn()
     with conn.cursor() as cur:
-        cur.execute("""
-            SELECT roll, frequency, solutions
-            FROM tblrolls
-            ORDER BY roll
-            LIMIT %s OFFSET %s
-        """, (page_size, offset))
-        rows = cur.fetchall()
+        if page == 1:
+            cur.execute("""
+                SELECT roll, frequency, solutions
+                FROM tblrolls
+                ORDER BY roll
+                LIMIT %s
+            """, (page_size,))
+        else:
+            cur.execute("""
+                SELECT roll
+                FROM tblrollpagecursor
+                WHERE page = %s
+            """, (page,))
+            row = cur.fetchone()
+            if row is None:
+                return "page out of range", 404
 
-        cur.execute("SELECT COUNT(*) FROM tblrolls")
-        total_rows = cur.fetchone()[0]
+            start_roll = row[0]
+
+            cur.execute("""
+                SELECT roll, frequency, solutions
+                FROM tblrolls
+                WHERE roll >= %s
+                ORDER BY roll
+                LIMIT %s
+            """, (start_roll, page_size))
+
+        rows = cur.fetchall()
 
     conn.close()
 
-    total_pages = (total_rows + page_size - 1) // page_size
+    total_pages = (15800439 + page_size - 1) // page_size
 
     return render_template(
         "rolls.html",
