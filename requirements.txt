@@ -10,4 +10,3 @@ pip
 setuptools
 Werkzeug
 psycopg2-binary
-json
