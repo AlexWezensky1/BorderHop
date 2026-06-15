@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>US State Border Distances</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"
+        integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"
+        integrity="sha384-9dCJK6nh7skY14HrcvlLYlFga9/MehJjL9ONWRflmiXNRuf8p2jiF4Y5PR881PTq"
+        crossorigin="anonymous"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,6 +36,10 @@
   header h1 { font-size: 20px; font-weight: 600; }
   header p  { font-size: 13px; color: #aaa; }
 
+  #header-text { flex: 1; min-width: 0; }
+
+  #header-actions { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+
   #main {
     display: flex;
     flex: 1;
@@ -51,6 +60,7 @@
     width: 100%;
     height: 100%;
     max-height: calc(100vh - 60px);
+    touch-action: manipulation;
   }
 
   .state {
@@ -73,6 +83,8 @@
     overflow: hidden;
   }
 
+  #sidebar-handle { display: none; }
+
   #sidebar-inner {
     padding: 20px;
     overflow-y: auto;
@@ -91,7 +103,6 @@
     gap: 8px;
   }
 
-  #sidebar-placeholder svg { opacity: 0.3; }
   #sidebar-placeholder p { font-size: 14px; }
 
   #selected-title {
@@ -144,6 +155,7 @@
     transform: translateX(-50%);
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
     align-items: center;
     font-size: 11px;
@@ -152,10 +164,11 @@
     padding: 6px 14px;
     border-radius: 20px;
     pointer-events: none;
+    max-width: calc(100% - 32px);
   }
 
   .legend-item { display: flex; align-items: center; gap: 4px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
   #tooltip {
     position: fixed;
@@ -169,9 +182,7 @@
     z-index: 100;
   }
 
-  /* dark mode toggle button */
   #dark-toggle {
-    margin-left: auto;
     background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.25);
     color: white;
@@ -186,26 +197,90 @@
   /* dark mode */
   body.dark { background: #4A4A4A; }
   body.dark #map-container { background: #4A4A4A; }
-  body.dark #sidebar { background: #4A4A4A; border-left-color: #666; }
+  body.dark #sidebar { background: #2a2a3e; border-left-color: #444; border-top-color: #444; }
   body.dark #sidebar-placeholder p { color: #aaa; }
   body.dark #selected-title { color: #fff; }
   body.dark #selected-subtitle { color: #bbb; }
-  body.dark #legend { border-top-color: #666; color: #ccc; }
+  body.dark #legend { background: rgba(0,0,0,0.75); color: #ccc; }
   body.dark .chip { color: #fff !important; }
   body.dark .distance-label { color: #ddd; }
-  body.dark #social { border-top-color: #666; }
+  body.dark #sidebar-handle { background: #444; }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    header { padding: 10px 16px; }
+    header h1 { font-size: 16px; }
+    header p  { display: none; }
+
+    #main { flex-direction: column; position: relative; }
+
+    #map-container {
+      padding: 8px 8px 0;
+      align-items: flex-start;
+      transition: align-items 0.3s;
+    }
+
+    #map-container.sidebar-open {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+
+    svg#map { max-height: none; }
+
+    #sidebar {
+      width: 100%;
+      border-left: none;
+      border-top: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60vh;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 50;
+    }
+
+    #sidebar.open { transform: translateY(0); }
+
+    #sidebar-handle {
+      display: block;
+      width: 40px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 12px auto 4px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    #sidebar-inner {
+      padding: 12px 16px 32px;
+    }
+
+    #legend {
+      bottom: 8px;
+      font-size: 10px;
+      gap: 5px;
+      padding: 5px 10px;
+    }
+
+    #tooltip { display: none !important; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
+  <div id="header-text">
     <h1>US State Border Distances</h1>
     <p>Hover a state to preview distances. Click to lock and see the full list.</p>
   </div>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:16px;">
+  <div id="header-actions">
     <button onclick="document.getElementById('about-modal').style.display='flex'" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:0;font-family:inherit;">About</button>
-<a href="https://buymeacoffee.com/alexsapps" target="_blank" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
+    <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
     </a>
     <button id="dark-toggle" onclick="toggleDark()">Dark</button>
@@ -221,9 +296,10 @@
   </div>
 
   <div id="sidebar">
+    <div id="sidebar-handle" onclick="closeSidebar()"></div>
     <div id="sidebar-inner">
       <div id="sidebar-placeholder">
-        <p>Hover a state to preview distances. Click to lock and see the full list.</p>
+        <p id="placeholder-text">Hover a state to preview distances. Click to lock and see the full list.</p>
       </div>
     </div>
   </div>
@@ -236,13 +312,20 @@
     <button onclick="document.getElementById('about-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">&#x2715;</button>
     <p>Made for Season 18 of <strong>Jet Lag: The Game</strong>.</p>
     <br>
-    <p>Watch on <a href="https://nebula.tv/jetlag" target="_blank" style="color:#0066cc;">Nebula</a> and <a href="https://www.youtube.com/c/jetlagthegame" target="_blank" style="color:#0066cc;">Youtube!</a></p>
+    <p>Watch on <a href="https://nebula.tv/jetlag" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Nebula</a> and <a href="https://www.youtube.com/c/jetlagthegame" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Youtube!</a></p>
     <br>
     <p style="color:#888;font-size:13px;">Made with Claude Code, Sonnet 4.6, low effort, in 4 hours.</p>
   </div>
 </div>
 
 <script>
+const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+// Update placeholder text for touch devices
+if ('ontouchstart' in window) {
+  document.getElementById('placeholder-text').textContent = 'Tap a state to see its border distances.';
+}
+
 // ── Adjacency data ──────────────────────────────────────────────────────────
 const ADJ = {
   AL:['FL','GA','MS','TN'],
@@ -310,7 +393,6 @@ const STATE_NAMES = {
   VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'
 };
 
-// FIPS zero-padded string → abbreviation (canonical form)
 const FIPS = {
   '01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT',
   '10':'DE','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN',
@@ -321,7 +403,6 @@ const FIPS = {
   '48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'
 };
 
-// Handle both numeric (1) and zero-padded string ('01') id formats from us-atlas
 function getAbbr(id) {
   const s = String(id);
   return FIPS[s] || FIPS[s.padStart(2, '0')] || '';
@@ -348,7 +429,6 @@ function getColor(d) {
   return DIST_COLORS[Math.min(d, DIST_COLORS.length - 1)];
 }
 
-// BFS — returns map of abbr → distance from start
 function bfs(start) {
   const dist = { [start]: 0 };
   const queue = [start];
@@ -384,6 +464,22 @@ for (let d = 1; d <= MAX_DIST; d++) {
   legendEl.appendChild(item);
 }
 
+function openSidebar() {
+  if (isMobile()) {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('map-container').classList.add('sidebar-open');
+  }
+}
+
+function closeSidebar() {
+  lockedAbbr = null;
+  resetColors();
+  showPlaceholder();
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('map-container').classList.remove('sidebar-open');
+  svg.selectAll('.state').classed('hovered', false).classed('locked', false);
+}
+
 fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
   .then(r => r.json())
   .then(us => {
@@ -398,6 +494,7 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
         .attr('data-abbr', d => getAbbr(d.id) || '')
         .style('fill', '#c8d6e5')
         .on('mousemove', function(event, d) {
+          if (isMobile()) return;
           const abbr = getAbbr(d.id);
           if (!abbr) return;
 
@@ -413,6 +510,7 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           }
         })
         .on('mouseout', function() {
+          if (isMobile()) return;
           tooltip.style.display = 'none';
           d3.select(this).classed('hovered', false);
           if (!lockedAbbr) {
@@ -428,17 +526,14 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           if (!abbr) return;
 
           if (lockedAbbr === abbr) {
-            // Unlock
-            lockedAbbr = null;
-            resetColors();
-            showPlaceholder();
+            closeSidebar();
           } else {
             lockedAbbr = abbr;
             applyColors(abbr);
             updateSidebar(abbr);
+            openSidebar();
           }
 
-          // Update locked styling — raise selected state so its stroke isn't clipped by neighbors
           svg.selectAll('.state').classed('hovered', false).classed('locked', false);
           if (lockedAbbr) {
             svg.selectAll('.state')
@@ -456,7 +551,7 @@ function applyColors(abbr) {
     if (!a) return '#c8d6e5';
     if (a === abbr) return getColor(0);
     if (a in dist) return getColor(dist[a]);
-    return '#bbb'; // unreachable (AK/HI)
+    return '#bbb';
   });
 }
 
@@ -465,9 +560,12 @@ function resetColors() {
 }
 
 function showPlaceholder() {
+  const text = ('ontouchstart' in window)
+    ? 'Tap a state to see its border distances.'
+    : 'Hover a state to preview distances. Click to lock and see the full list.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder">
-      <p>Hover a state to preview distances. Click to lock and see the full list.</p>
+      <p>${text}</p>
     </div>`;
 }
 
@@ -480,7 +578,6 @@ function updateSidebar(abbr) {
   const dist = bfs(abbr);
   const maxDist = Math.max(...Object.values(dist));
 
-  // Group states by distance
   const groups = {};
   for (const [state, d] of Object.entries(dist)) {
     if (d === 0) continue;
@@ -492,8 +589,15 @@ function updateSidebar(abbr) {
 
   let html = `
     <div id="selected-title">${STATE_NAMES[abbr]}</div>
-    <div id="selected-subtitle">Click again to unlock · ${Object.keys(dist).length - 1} reachable states</div>
+    <div id="selected-subtitle">Tap handle to close · ${Object.keys(dist).length - 1} reachable states</div>
   `;
+
+  if (!isMobile()) {
+    html = `
+      <div id="selected-title">${STATE_NAMES[abbr]}</div>
+      <div id="selected-subtitle">Click again to unlock · ${Object.keys(dist).length - 1} reachable states</div>
+    `;
+  }
 
   for (let d = 1; d <= maxDist; d++) {
     if (!groups[d]) continue;
