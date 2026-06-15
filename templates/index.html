@@ -217,12 +217,17 @@
     #map-container {
       padding: 8px 8px 0;
       align-items: flex-start;
-      transition: align-items 0.3s;
+      min-height: 0;
+    }
+
+    svg#map {
+      max-height: 100%;
     }
 
     #map-container.sidebar-open {
       align-items: flex-start;
       justify-content: flex-start;
+      max-height: 40vh;
     }
 
     svg#map { max-height: none; }
