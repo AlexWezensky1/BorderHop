@@ -518,11 +518,19 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     const geometries = world.objects.countries.geometries;
     const features = topojson.feature(world, world.objects.countries).features;
 
-    // Compute adjacency from topology
+    // Compute adjacency from topology, merging multi-polygon countries
     const neighborIndices = topojson.neighbors(geometries);
     geometries.forEach((geo, i) => {
       const id = String(geo.id);
-      ADJ[id] = neighborIndices[i].map(j => String(geometries[j].id));
+      const neighbors = neighborIndices[i]
+        .map(j => String(geometries[j].id))
+        .filter(nb => nb !== id);
+      if (!ADJ[id]) {
+        ADJ[id] = neighbors;
+      } else {
+        const merged = new Set([...ADJ[id], ...neighbors]);
+        ADJ[id] = [...merged];
+      }
     });
 
     // Find actual max border distance and build legend
