@@ -451,6 +451,25 @@ function bfs(startId) {
   return dist;
 }
 
+function addEdge(a, b) {
+  if (!ADJ[a]) ADJ[a] = [];
+  if (!ADJ[b]) ADJ[b] = [];
+  if (!ADJ[a].includes(b)) ADJ[a].push(b);
+  if (!ADJ[b].includes(a)) ADJ[b].push(a);
+}
+
+function removeEdge(a, b) {
+  if (ADJ[a]) ADJ[a] = ADJ[a].filter(x => x !== b);
+  if (ADJ[b]) ADJ[b] = ADJ[b].filter(x => x !== a);
+}
+
+function removeCountry(id) {
+  for (const nb of (ADJ[id] || [])) {
+    if (ADJ[nb]) ADJ[nb] = ADJ[nb].filter(x => x !== id);
+  }
+  delete ADJ[id];
+}
+
 const svg = d3.select('#map');
 const W = 960, H = 500;
 svg.attr('viewBox', `0 0 ${W} ${H}`);
@@ -532,6 +551,25 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
         ADJ[id] = [...merged];
       }
     });
+
+    // ── Custom adjacency overrides ────────────────────────────────────────────
+    // Bridge / tunnel connections (physical crossings that aren't land borders)
+    addEdge('250', '826');  // France ↔ UK (Channel Tunnel)
+    addEdge('208', '752');  // Denmark ↔ Sweden (Øresund Bridge / Drogden Tunnel)
+    addEdge('191', '499');  // Croatia ↔ Montenegro (Pelješac Bridge)
+    addEdge('372', '826');  // Ireland ↔ UK (Northern Ireland)
+    addEdge('360', '458');  // Indonesia ↔ Malaysia (island hop via Borneo)
+    addEdge('304', '124');  // Greenland ↔ Canada (Hans Island)
+    addEdge('643', '408');  // Russia ↔ North Korea (confirmed short land border)
+
+    // Exclave / disconnected territory removals
+    removeEdge('024', '178'); // Angola ↔ Rep. of Congo  (only via Cabinda exclave)
+    removeEdge('031', '792'); // Azerbaijan ↔ Turkey     (only via Nakhchivan exclave; not in 110m atlas but guard anyway)
+    removeEdge('643', '616'); // Russia ↔ Poland         (only via Kaliningrad)
+    removeEdge('643', '440'); // Russia ↔ Lithuania      (only via Kaliningrad)
+    removeEdge('724', '504'); // Spain ↔ Morocco         (only via Ceuta / Melilla)
+    removeEdge('504', '478'); // Morocco ↔ Mauritania   (Western Sahara between them)
+    removeCountry('275');     // Palestine: Gaza not connected to West Bank
 
     // Find actual max border distance and build legend
     let maxGlobalDist = 0;
