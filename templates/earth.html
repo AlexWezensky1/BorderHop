@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Country Border Distances</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<script src="https://d3js.org/d3.v7.min.js"
+        integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"
+        integrity="sha384-9dCJK6nh7skY14HrcvlLYlFga9/MehJjL9ONWRflmiXNRuf8p2jiF4Y5PR881PTq"
+        crossorigin="anonymous"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Helvetica, sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background: #1a1a2e;
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 20px; font-weight: 600; }
+  header p  { font-size: 13px; color: #aaa; }
+
+  #header-text { flex: 1; min-width: 0; }
+  #header-actions { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+
+  #main { display: flex; flex: 1; overflow: hidden; }
+
+  #map-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    min-width: 0;
+    position: relative;
+  }
+
+  svg#map {
+    width: 100%;
+    height: 100%;
+    max-height: calc(100vh - 60px);
+    touch-action: manipulation;
+  }
+
+  .sphere { fill: #b8d4e8; }
+
+  .country {
+    stroke: white;
+    stroke-width: 0.4px;
+    cursor: pointer;
+    transition: fill 0.15s ease;
+  }
+
+  .country:hover { stroke-width: 1.2px; stroke: #333; }
+  .country.locked, .country.hovered { stroke: #000 !important; stroke-width: 1.8px !important; }
+
+  #sidebar {
+    width: 300px;
+    background: white;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  #sidebar-handle { display: none; }
+  #sidebar-close {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #888;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+
+  #sidebar-inner { padding: 20px; overflow-y: auto; flex: 1; }
+
+  #sidebar-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #aaa;
+    text-align: center;
+    padding: 24px;
+    gap: 8px;
+  }
+
+  #sidebar-placeholder p { font-size: 14px; }
+
+  #selected-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+  #selected-subtitle { font-size: 12px; color: #888; margin-bottom: 18px; }
+
+  .distance-group { margin-bottom: 18px; }
+
+  .distance-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .distance-label .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .chip {
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    color: #000;
+  }
+
+  #legend {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+    color: #666;
+    background: rgba(255,255,255,0.85);
+    padding: 6px 14px;
+    border-radius: 20px;
+    pointer-events: none;
+    max-width: calc(100% - 32px);
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  #tooltip {
+    position: fixed;
+    background: rgba(26,26,46,0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+  }
+
+  #dark-toggle {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  #dark-toggle:hover { background: rgba(255,255,255,0.22); }
+
+  /* dark mode */
+  body.dark { background: #4A4A4A; }
+  body.dark #map-container { background: #4A4A4A; }
+  body.dark .sphere { fill: #1a2a3a; }
+  body.dark #sidebar { background: #2a2a3e; border-left-color: #444; border-top-color: #444; }
+  body.dark #sidebar-placeholder p { color: #aaa; }
+  body.dark #selected-title { color: #fff; }
+  body.dark #selected-subtitle { color: #bbb; }
+  body.dark #legend { background: rgba(0,0,0,0.75); color: #ccc; }
+  body.dark .chip { color: #fff !important; }
+  body.dark .distance-label { color: #ddd; }
+  body.dark #sidebar-handle { background: #444; }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    header { padding: 10px 16px; }
+    header h1 { font-size: 16px; }
+    header p  { display: none; }
+
+    #main { flex-direction: column; position: relative; }
+
+    #map-container {
+      padding: 8px 8px 0;
+      align-items: flex-start;
+      min-height: 0;
+    }
+
+    svg#map { max-height: 100%; }
+
+    #sidebar {
+      width: 100%;
+      border-left: none;
+      border-top: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50vh;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 50;
+    }
+
+    #sidebar.open { transform: translateY(0); }
+
+    #sidebar-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 12px 4px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    #sidebar-handle::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+    }
+
+    #sidebar-close {
+      display: block;
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    #sidebar-inner { padding: 12px 16px 32px; }
+
+    #map-container.sidebar-open {
+      align-items: flex-start;
+      justify-content: flex-start;
+      max-height: 50vh;
+    }
+
+    #legend { bottom: 8px; font-size: 10px; gap: 5px; padding: 5px 10px; }
+    #tooltip { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div id="header-text">
+    <h1>World Country Border Distances</h1>
+    <p>Hover · Click to lock · Right-click to zoom · Right-drag to pan</p>
+  </div>
+  <div id="header-actions">
+    <a href="/usa" style="color:#aaa;font-size:13px;text-decoration:none;">USA</a>
+    <button onclick="document.getElementById('about-modal').style.display='flex'" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:0;font-family:inherit;">About</button>
+    <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
+    </a>
+    <button id="dark-toggle" onclick="toggleDark()">Dark</button>
+  </div>
+</header>
+
+<div id="main">
+  <div id="map-container">
+    <svg id="map"></svg>
+    <div id="legend">
+      <span style="font-weight:600;margin-right:4px;">Distance:</span>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <div id="sidebar-handle">
+      <button id="sidebar-close" onclick="closeSidebar()" aria-label="Close">&#x2715;</button>
+    </div>
+    <div id="sidebar-inner">
+      <div id="sidebar-placeholder">
+        <p id="placeholder-text">Hover a country to preview distances. Click to lock and see the full list.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:12px;padding:32px;max-width:420px;width:90%;position:relative;font-size:15px;line-height:1.7;color:#222;">
+    <button onclick="document.getElementById('about-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">&#x2715;</button>
+    <p>Made for Season 18 of <strong>Jet Lag: The Game</strong>.</p>
+    <br>
+    <p>Watch on <a href="https://nebula.tv/jetlag" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Nebula</a> and <a href="https://www.youtube.com/c/jetlagthegame" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Youtube!</a></p>
+    <br>
+    <p style="color:#888;font-size:13px;">Made with Claude Code, Sonnet 4.6, low effort, in 4 hours.</p>
+  </div>
+</div>
+
+<script>
+const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+if ('ontouchstart' in window) {
+  document.getElementById('placeholder-text').textContent = 'Tap a country to see its border distances.';
+}
+
+const COUNTRY_NAMES = {
+  '4':'Afghanistan','8':'Albania','12':'Algeria','20':'Andorra','24':'Angola',
+  '28':'Antigua and Barbuda','32':'Argentina','36':'Australia','40':'Austria',
+  '31':'Azerbaijan','44':'Bahamas','48':'Bahrain','50':'Bangladesh',
+  '52':'Barbados','112':'Belarus','56':'Belgium','84':'Belize',
+  '204':'Benin','64':'Bhutan','68':'Bolivia','70':'Bosnia and Herzegovina',
+  '72':'Botswana','76':'Brazil','96':'Brunei','100':'Bulgaria',
+  '854':'Burkina Faso','108':'Burundi','132':'Cabo Verde','116':'Cambodia',
+  '120':'Cameroon','124':'Canada','140':'Central African Republic',
+  '148':'Chad','152':'Chile','156':'China','170':'Colombia',
+  '174':'Comoros','178':'Republic of Congo','180':'DR Congo',
+  '188':'Costa Rica','384':'Côte d\'Ivoire','191':'Croatia','192':'Cuba',
+  '196':'Cyprus','203':'Czechia','208':'Denmark','262':'Djibouti',
+  '212':'Dominica','214':'Dominican Republic','218':'Ecuador','818':'Egypt',
+  '222':'El Salvador','226':'Equatorial Guinea','232':'Eritrea','233':'Estonia',
+  '748':'Eswatini','231':'Ethiopia','242':'Fiji','246':'Finland','250':'France',
+  '266':'Gabon','270':'Gambia','268':'Georgia','276':'Germany','288':'Ghana',
+  '300':'Greece','308':'Grenada','320':'Guatemala','324':'Guinea',
+  '624':'Guinea-Bissau','328':'Guyana','332':'Haiti','340':'Honduras',
+  '348':'Hungary','356':'India','360':'Indonesia','364':'Iran','368':'Iraq',
+  '372':'Ireland','376':'Israel','380':'Italy','388':'Jamaica','392':'Japan',
+  '400':'Jordan','398':'Kazakhstan','404':'Kenya','296':'Kiribati',
+  '408':'North Korea','410':'South Korea','414':'Kuwait','417':'Kyrgyzstan',
+  '418':'Laos','422':'Lebanon','426':'Lesotho','430':'Liberia','434':'Libya',
+  '438':'Liechtenstein','440':'Lithuania','442':'Luxembourg','450':'Madagascar',
+  '454':'Malawi','458':'Malaysia','462':'Maldives','466':'Mali','470':'Malta',
+  '584':'Marshall Islands','478':'Mauritania','480':'Mauritius','484':'Mexico',
+  '583':'Micronesia','498':'Moldova','492':'Monaco','496':'Mongolia',
+  '499':'Montenegro','504':'Morocco','508':'Mozambique','104':'Myanmar',
+  '516':'Namibia','520':'Nauru','524':'Nepal','528':'Netherlands',
+  '554':'New Zealand','558':'Nicaragua','562':'Niger','566':'Nigeria',
+  '807':'North Macedonia','578':'Norway','512':'Oman','586':'Pakistan',
+  '585':'Palau','591':'Panama','598':'Papua New Guinea','600':'Paraguay',
+  '604':'Peru','608':'Philippines','616':'Poland','620':'Portugal',
+  '634':'Qatar','642':'Romania','643':'Russia','646':'Rwanda',
+  '659':'Saint Kitts and Nevis','662':'Saint Lucia',
+  '670':'Saint Vincent and the Grenadines','882':'Samoa',
+  '674':'San Marino','678':'São Tomé and Príncipe','682':'Saudi Arabia',
+  '686':'Senegal','688':'Serbia','690':'Seychelles','694':'Sierra Leone',
+  '703':'Slovakia','705':'Slovenia','90':'Solomon Islands','706':'Somalia',
+  '710':'South Africa','728':'South Sudan','724':'Spain','144':'Sri Lanka',
+  '729':'Sudan','740':'Suriname','752':'Sweden','756':'Switzerland',
+  '760':'Syria','158':'Taiwan','762':'Tajikistan','834':'Tanzania',
+  '764':'Thailand','626':'Timor-Leste','768':'Togo','776':'Tonga',
+  '780':'Trinidad and Tobago','788':'Tunisia','792':'Turkey',
+  '795':'Turkmenistan','798':'Tuvalu','800':'Uganda','804':'Ukraine',
+  '784':'United Arab Emirates','826':'United Kingdom','840':'United States',
+  '858':'Uruguay','860':'Uzbekistan','548':'Vanuatu','336':'Vatican City',
+  '862':'Venezuela','704':'Vietnam','887':'Yemen','894':'Zambia','716':'Zimbabwe',
+  '10':'Antarctica',
+  '238':'Falkland Islands','260':'French Southern Territories','275':'Palestine',
+  '304':'Greenland','352':'Iceland','428':'Latvia','540':'New Caledonia',
+  '630':'Puerto Rico','732':'Western Sahara'
+};
+
+function getCountryName(id) {
+  const s = String(id);
+  return COUNTRY_NAMES[s] || COUNTRY_NAMES[String(parseInt(s, 10))] || 'Country ' + s;
+}
+
+const MAX_DIST = 11;
+
+const DIST_COLORS = [
+  '#70CCD9','#77C043','#BBD532','#F7E814','#FAA81F','#F15B23',
+  '#DC2E30','#D54472','#AA53A0','#6A4EA0','#3855A5','#3B7DBF',
+];
+
+function getColor(d) {
+  return DIST_COLORS[Math.min(d, DIST_COLORS.length - 1)];
+}
+
+function bfs(startId) {
+  const dist = { [startId]: 0 };
+  const queue = [startId];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const nb of (ADJ[cur] || [])) {
+      if (!(nb in dist)) {
+        dist[nb] = dist[cur] + 1;
+        queue.push(nb);
+      }
+    }
+  }
+  return dist;
+}
+
+const svg = d3.select('#map');
+const W = 960, H = 500;
+svg.attr('viewBox', `0 0 ${W} ${H}`);
+
+const projection = d3.geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
+const path = d3.geoPath().projection(projection);
+
+let lockedId = null;
+let ADJ = {};
+const tooltip = document.getElementById('tooltip');
+
+const legendEl = document.getElementById('legend');
+for (let d = 1; d <= MAX_DIST; d++) {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `<div class="legend-dot" style="background:${getColor(d)}"></div><span>${d}</span>`;
+  legendEl.appendChild(item);
+}
+
+// ── Zoom ─────────────────────────────────────────────────────────────────────
+const mapGroup = svg.append('g');
+
+const zoomBehavior = d3.zoom()
+  .scaleExtent([1, 10])
+  .filter(event => event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2))
+  .on('zoom', ({transform}) => mapGroup.attr('transform', transform));
+
+svg.call(zoomBehavior).on('dblclick.zoom', null);
+svg.on('contextmenu', event => event.preventDefault());
+
+let rightStart = null;
+svg.on('mousedown.rc', event => {
+  if (event.button !== 2) return;
+  rightStart = [event.clientX, event.clientY];
+});
+svg.on('mouseup.rc', function(event) {
+  if (event.button !== 2 || !rightStart) return;
+  const dx = event.clientX - rightStart[0], dy = event.clientY - rightStart[1];
+  rightStart = null;
+  if (Math.hypot(dx, dy) > 5) return;
+  const t = d3.zoomTransform(this);
+  if (t.k > 1.2) {
+    svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity);
+  } else {
+    const [x, y] = d3.pointer(event);
+    const k = 4;
+    svg.transition().duration(400).call(
+      zoomBehavior.transform,
+      d3.zoomIdentity.translate(W / 2 - k * x, H / 2 - k * y).scale(k)
+    );
+  }
+});
+
+function openSidebar() {
+  if (isMobile()) {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('map-container').classList.add('sidebar-open');
+  }
+}
+
+function closeSidebar() {
+  lockedId = null;
+  resetColors();
+  showPlaceholder();
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('map-container').classList.remove('sidebar-open');
+  svg.selectAll('.country').classed('hovered', false).classed('locked', false);
+}
+
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r => r.json())
+  .then(world => {
+    const geometries = world.objects.countries.geometries;
+    const features = topojson.feature(world, world.objects.countries).features;
+
+    // Compute adjacency from topology
+    const neighborIndices = topojson.neighbors(geometries);
+    geometries.forEach((geo, i) => {
+      const id = String(geo.id);
+      ADJ[id] = neighborIndices[i].map(j => String(geometries[j].id));
+    });
+
+    // Ocean background
+    mapGroup.append('path')
+      .datum({ type: 'Sphere' })
+      .attr('class', 'sphere')
+      .attr('d', path);
+
+    // Countries
+    mapGroup.selectAll('path.country')
+      .data(features)
+      .join('path')
+        .attr('class', 'country')
+        .attr('d', path)
+        .attr('data-id', d => String(d.id))
+        .style('fill', '#c8d6e5')
+        .on('mousemove', function(event, d) {
+          if (isMobile()) return;
+          const id = String(d.id);
+          if (!id || id === 'undefined') return;
+
+          tooltip.textContent = getCountryName(id);
+          tooltip.style.display = 'block';
+          tooltip.style.left = (event.clientX + 12) + 'px';
+          tooltip.style.top  = (event.clientY - 28) + 'px';
+
+          if (!lockedId) {
+            applyColors(id);
+            svg.selectAll('.country.hovered').classed('hovered', false);
+            d3.select(this).classed('hovered', true).raise();
+          }
+        })
+        .on('mouseout', function() {
+          if (isMobile()) return;
+          tooltip.style.display = 'none';
+          d3.select(this).classed('hovered', false);
+          if (!lockedId) {
+            resetColors();
+          } else {
+            svg.selectAll('.country')
+              .filter(e => String(e.id) === lockedId)
+              .raise();
+          }
+        })
+        .on('click', function(event, d) {
+          const id = String(d.id);
+          if (!id || id === 'undefined') return;
+
+          if (lockedId === id) {
+            closeSidebar();
+          } else {
+            lockedId = id;
+            applyColors(id);
+            updateSidebar(id);
+            openSidebar();
+          }
+
+          svg.selectAll('.country').classed('hovered', false).classed('locked', false);
+          if (lockedId) {
+            svg.selectAll('.country')
+              .filter(e => String(e.id) === lockedId)
+              .classed('locked', true)
+              .raise();
+          }
+        });
+  });
+
+function applyColors(id) {
+  const dist = bfs(id);
+  svg.selectAll('.country').style('fill', function() {
+    const a = d3.select(this).attr('data-id');
+    if (!a) return '#c8d6e5';
+    if (a === id) return getColor(0);
+    if (a in dist) return getColor(dist[a]);
+    return '#bbb';
+  });
+}
+
+function resetColors() {
+  svg.selectAll('.country').style('fill', '#c8d6e5');
+}
+
+function showPlaceholder() {
+  const text = ('ontouchstart' in window)
+    ? 'Tap a country to see its border distances.'
+    : 'Hover a country to preview distances. Click to lock and see the full list.';
+  document.getElementById('sidebar-inner').innerHTML = `
+    <div id="sidebar-placeholder"><p>${text}</p></div>`;
+}
+
+function toggleDark() {
+  const dark = document.body.classList.toggle('dark');
+  document.getElementById('dark-toggle').textContent = dark ? 'Light' : 'Dark';
+}
+
+function updateSidebar(id) {
+  const dist = bfs(id);
+  const maxDist = dist && Object.keys(dist).length > 1
+    ? Math.max(...Object.values(dist))
+    : 0;
+
+  const groups = {};
+  for (const [cId, d] of Object.entries(dist)) {
+    if (d === 0) continue;
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(cId);
+  }
+
+  const allIds = Object.keys(ADJ);
+  const unreachable = allIds.filter(c => c !== id && !(c in dist));
+
+  const reachableCount = Object.keys(dist).length - 1;
+  const subtitle = isMobile()
+    ? `Tap ✕ to close · ${reachableCount} reachable`
+    : `Click again to unlock · ${reachableCount} reachable`;
+
+  let html = `
+    <div id="selected-title">${getCountryName(id)}</div>
+    <div id="selected-subtitle">${subtitle}</div>
+  `;
+
+  for (let d = 1; d <= maxDist; d++) {
+    if (!groups[d]) continue;
+    const color = getColor(d);
+    const label = d === 1
+      ? `Direct neighbors: ${groups[d].length}`
+      : `${d} away: ${groups[d].length}`;
+
+    html += `
+      <div class="distance-group">
+        <div class="distance-label">
+          <span class="dot" style="background:${color}"></span>
+          ${label}
+        </div>
+        <div class="chips">
+          ${groups[d]
+            .sort((a, b) => getCountryName(a).localeCompare(getCountryName(b)))
+            .map(c => `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${getCountryName(c)}</span>`)
+            .join('')}
+        </div>
+      </div>`;
+  }
+
+  if (unreachable.length) {
+    html += `
+      <div class="distance-group">
+        <div class="distance-label" style="color:#999;">
+          <span class="dot" style="background:#ddd;border:1px solid #bbb;"></span>
+          Not reachable by land (${unreachable.length})
+        </div>
+        <div class="chips">
+          ${unreachable
+            .sort((a, b) => getCountryName(a).localeCompare(getCountryName(b)))
+            .map(c => `<span class="chip" style="background:#e0e0e033;border:1px solid #bbb;">${getCountryName(c)}</span>`)
+            .join('')}
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('sidebar-inner').innerHTML = html;
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, make_response
+from flask import Flask, render_template, redirect
 import os
 
 app = Flask(__name__)
@@ -20,7 +20,15 @@ def set_security_headers(response):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return redirect('/usa')
+
+@app.route('/usa')
+def usa():
+    return render_template('usa.html')
+
+@app.route('/earth')
+def earth():
+    return render_template('earth.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
