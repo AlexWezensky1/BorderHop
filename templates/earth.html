@@ -390,15 +390,50 @@ function getCountryName(id) {
   return COUNTRY_NAMES[s] || COUNTRY_NAMES[String(parseInt(s, 10))] || 'Country ' + s;
 }
 
-const MAX_DIST = 11;
-
 const DIST_COLORS = [
-  '#70CCD9','#77C043','#BBD532','#F7E814','#FAA81F','#F15B23',
-  '#DC2E30','#D54472','#AA53A0','#6A4EA0','#3855A5','#3B7DBF',
+  '#70CCD9', // 0: selected
+  '#28CC60', // 1
+  '#8ED820', // 2
+  '#D4D800', // 3
+  '#F0E000', // 4
+  '#FFB820', // 5
+  '#FF7820', // 6
+  '#F04820', // 7
+  '#E02028', // 8
+  '#C00048', // 9
+  '#D840A8', // 10
+  '#CC38D8', // 11
+  '#9830D8', // 12
+  '#6848D0', // 13
+  '#4858C8', // 14
+  '#1870C8', // 15
+  '#0898D0', // 16
+  '#00B8B8', // 17
+  '#00A880', // 18
+  '#189870', // 19
+  '#248850', // 20
+  '#D4AC20', // 21
+  '#AD4040', // 22
+  '#6040A8', // 23
+  '#2060A0', // 24
+  '#006060', // 25
 ];
+
+let MAX_DIST = DIST_COLORS.length - 1;
 
 function getColor(d) {
   return DIST_COLORS[Math.min(d, DIST_COLORS.length - 1)];
+}
+
+function buildLegend(maxDist) {
+  const legendEl = document.getElementById('legend');
+  legendEl.querySelectorAll('.legend-item').forEach(el => el.remove());
+  for (let d = 1; d <= maxDist; d++) {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${getColor(d)}"></div><span>${d}</span>`;
+    legendEl.appendChild(item);
+  }
 }
 
 function bfs(startId) {
@@ -427,40 +462,32 @@ let lockedId = null;
 let ADJ = {};
 const tooltip = document.getElementById('tooltip');
 
-const legendEl = document.getElementById('legend');
-for (let d = 1; d <= MAX_DIST; d++) {
-  const item = document.createElement('div');
-  item.className = 'legend-item';
-  item.innerHTML = `<div class="legend-dot" style="background:${getColor(d)}"></div><span>${d}</span>`;
-  legendEl.appendChild(item);
-}
-
 // ── Zoom ─────────────────────────────────────────────────────────────────────
 const mapGroup = svg.append('g');
 
 const zoomBehavior = d3.zoom()
   .scaleExtent([1, 10])
-  .filter(event => event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2))
+  .filter(event => event.type === 'wheel' || event.button === 2)
   .on('zoom', ({transform}) => mapGroup.attr('transform', transform));
 
 svg.call(zoomBehavior).on('dblclick.zoom', null);
 svg.on('contextmenu', event => event.preventDefault());
 
 let rightStart = null;
-svg.on('mousedown.rc', event => {
+svg.on('pointerdown.rc', event => {
   if (event.button !== 2) return;
   rightStart = [event.clientX, event.clientY];
 });
-svg.on('mouseup.rc', function(event) {
+d3.select(window).on('pointerup.rc', function(event) {
   if (event.button !== 2 || !rightStart) return;
   const dx = event.clientX - rightStart[0], dy = event.clientY - rightStart[1];
   rightStart = null;
   if (Math.hypot(dx, dy) > 5) return;
-  const t = d3.zoomTransform(this);
+  const t = d3.zoomTransform(svg.node());
   if (t.k > 1.2) {
     svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity);
   } else {
-    const [x, y] = d3.pointer(event);
+    const [x, y] = d3.pointer(event, svg.node());
     const k = 4;
     svg.transition().duration(400).call(
       zoomBehavior.transform,
@@ -497,6 +524,25 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       const id = String(geo.id);
       ADJ[id] = neighborIndices[i].map(j => String(geometries[j].id));
     });
+
+    // Find actual max border distance and build legend
+    let maxGlobalDist = 0;
+    let maxFromId = null, maxToId = null;
+    for (const startId of Object.keys(ADJ)) {
+      const dist = bfs(startId);
+      const vals = Object.values(dist);
+      if (vals.length > 1) {
+        const m = Math.max(...vals);
+        if (m > maxGlobalDist) {
+          maxGlobalDist = m;
+          maxFromId = startId;
+          maxToId = Object.entries(dist).find(([k, v]) => v === m)[0];
+        }
+      }
+    }
+    MAX_DIST = maxGlobalDist;
+    console.log(`Longest path: ${maxGlobalDist} (${getCountryName(maxFromId)} ↔ ${getCountryName(maxToId)})`);
+    buildLegend(MAX_DIST);
 
     // Ocean background
     mapGroup.append('path')
