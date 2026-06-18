@@ -337,7 +337,7 @@
 <header>
   <div id="header-text">
     <h1>US State Border Distances</h1>
-    <p>Hover to preview · click to select a region · click again to deselect</p>
+    <p>Hover to preview. Click to lock. Click multiple states to form a region.</p>
   </div>
   <div id="header-center">
     <button id="canada-toggle" class="country-toggle" onclick="toggleCanada()">Canada</button>
@@ -367,7 +367,7 @@
     </div>
     <div id="sidebar-inner">
       <div id="sidebar-placeholder">
-        <p id="placeholder-text">Hover a state to preview distances. Click to select a region.</p>
+        <p id="placeholder-text">Hover to preview. Click to lock. Click multiple states to form a region.</p>
       </div>
     </div>
   </div>
@@ -753,8 +753,8 @@ function resetColors() {
 
 function showPlaceholder() {
   const text = ('ontouchstart' in window)
-    ? 'Tap states to select a region.'
-    : 'Hover a state to preview distances. Click to select a region.';
+    ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
+    : 'Hover to preview. Click to lock. Click multiple states to form a region.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder">
       <p>${text}</p>
