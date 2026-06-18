@@ -787,7 +787,7 @@ function updateSidebar(abbrs) {
   }
 
   const unreachable = Object.keys(STATE_NAMES).filter(s => !arr.includes(s) && !(s in combined));
-  const reachableStates = Object.keys(combined).filter(k => k in STATE_NAMES).length;
+  const reachableStates = Object.keys(combined).filter(k => k in STATE_NAMES || k === 'CAN' || k === 'MEX').length;
 
   const subtitle = isMobile()
     ? `Tap handle to close · ${reachableStates} reachable states`
@@ -803,11 +803,10 @@ function updateSidebar(abbrs) {
   for (let d = 1; d <= maxDist; d++) {
     if (!groups[d]) continue;
     const color = getColor(d);
-    const stateCount = groups[d].filter(s => s in STATE_NAMES).length;
-    const hasCountry = groups[d].some(s => s === 'CAN' || s === 'MEX');
+    const stateCount = groups[d].filter(s => s in STATE_NAMES || s === 'CAN' || s === 'MEX').length;
     const label = d === 1
-      ? `Direct neighbors: ${stateCount}${hasCountry ? '+' : ''}`
-      : `${d} away: ${stateCount}${hasCountry ? '+' : ''} state${stateCount !== 1 ? 's' : ''}`;
+      ? `Direct neighbors: ${stateCount}`
+      : `${d} away: ${stateCount} state${stateCount !== 1 ? 's' : ''}`;
 
     html += `
       <div class="distance-group">
