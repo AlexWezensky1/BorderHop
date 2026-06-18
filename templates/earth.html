@@ -147,9 +147,9 @@
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
     font-size: 11px;
     color: #666;
@@ -157,7 +157,7 @@
     padding: 6px 14px;
     border-radius: 20px;
     pointer-events: none;
-    max-width: calc(100% - 32px);
+    white-space: nowrap;
   }
 
   .legend-item { display: flex; align-items: center; gap: 4px; }
@@ -278,7 +278,7 @@
 <header>
   <div id="header-text">
     <h1>World Country Border Distances</h1>
-    <p>Hover · Click to lock · Right-click to zoom · Right-drag to pan</p>
+    <p>Hover · Click to lock · Right-click or scroll to zoom · Right-drag to pan</p>
   </div>
   <div id="header-actions">
     <a href="/usa" style="color:#aaa;font-size:13px;text-decoration:none;">USA</a>
@@ -381,7 +381,7 @@ const COUNTRY_NAMES = {
   '862':'Venezuela','704':'Vietnam','887':'Yemen','894':'Zambia','716':'Zimbabwe',
   '10':'Antarctica',
   '238':'Falkland Islands','260':'French Southern Territories','275':'Palestine',
-  '304':'Greenland','352':'Iceland','428':'Latvia','540':'New Caledonia',
+  '304':'Greenland','352':'Iceland','383':'Kosovo','428':'Latvia','540':'New Caledonia',
   '630':'Puerto Rico','732':'Western Sahara'
 };
 
@@ -570,6 +570,11 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     removeEdge('724', '504'); // Spain ↔ Morocco         (only via Ceuta / Melilla)
     removeEdge('504', '478'); // Morocco ↔ Mauritania   (Western Sahara between them)
     removeCountry('275');     // Palestine: Gaza not connected to West Bank
+    // Kosovo (383) may be too small for topology to detect all borders at 110m scale
+    addEdge('383', '688');  // Kosovo ↔ Serbia
+    addEdge('383', '8');    // Kosovo ↔ Albania
+    addEdge('383', '807');  // Kosovo ↔ North Macedonia
+    addEdge('383', '499');  // Kosovo ↔ Montenegro
 
     // Find actual max border distance and build legend
     let maxGlobalDist = 0;
