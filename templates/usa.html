@@ -563,8 +563,15 @@ const mexClipY = borderProj([-104, 28])[1];
 const defs = svg.append('defs');
 defs.append('clipPath').attr('id', 'canada-clip')
   .append('rect').attr('x', -W).attr('y', canClipY).attr('width', W * 3).attr('height', H * 2);
+// Punch out Alaska (x≈-41–208, y≈437–571) and Hawaii (x≈221–332, y≈498–570) insets
+const akHiX2 = 342, akHiY1 = 428, akHiY2 = 582;
 defs.append('clipPath').attr('id', 'mexico-clip')
-  .append('rect').attr('x', -W).attr('y', -H).attr('width', W * 3).attr('height', mexClipY + H);
+  .append('path')
+  .attr('clip-rule', 'evenodd')
+  .attr('d',
+    `M ${-W} ${-H} L ${W * 3} ${-H} L ${W * 3} ${mexClipY} L ${-W} ${mexClipY} Z ` +
+    `M ${-W} ${akHiY1} L ${akHiX2} ${akHiY1} L ${akHiX2} ${akHiY2} L ${-W} ${akHiY2} Z`
+  );
 
 const NEIGHBOR_NEUTRAL = '#b8c8d5';
 
