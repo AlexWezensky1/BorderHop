@@ -27,18 +27,34 @@
     background: #1a1a2e;
     color: white;
     padding: 12px 24px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 16px;
+    column-gap: 16px;
     flex-shrink: 0;
   }
 
   header h1 { font-size: 20px; font-weight: 600; }
   header p  { font-size: 13px; color: #aaa; }
 
-  #header-text { flex: 1; min-width: 0; }
+  #header-text { min-width: 0; }
+  #header-center { display: flex; align-items: center; gap: 8px; justify-content: center; }
+  #header-actions { display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
 
-  #header-actions { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .country-toggle {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.75);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-family: inherit;
+  }
+  .country-toggle:hover { background: rgba(255,255,255,0.22); color: white; }
+  .country-toggle.active { background: white; color: #1a1a2e; border-color: white; font-weight: 600; }
 
   #main {
     display: flex;
@@ -218,9 +234,17 @@
 
   /* ── Mobile ── */
   @media (max-width: 768px) {
-    header { padding: 10px 16px; }
+    header {
+      padding: 10px 16px 8px;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+    }
+    #header-text   { grid-column: 1; grid-row: 1; }
+    #header-actions { grid-column: 2; grid-row: 1; }
+    #header-center { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; gap: 6px; }
     header h1 { font-size: 16px; }
     header p  { display: none; }
+    .country-toggle { padding: 4px 12px; font-size: 12px; }
 
     #main { flex-direction: column; position: relative; }
 
@@ -307,6 +331,10 @@
   <div id="header-text">
     <h1>US State Border Distances</h1>
     <p>Hover · Click to lock · Right-click to zoom · Right-drag to pan</p>
+  </div>
+  <div id="header-center">
+    <button id="canada-toggle" class="country-toggle" onclick="toggleCanada()">Canada</button>
+    <button id="mexico-toggle" class="country-toggle" onclick="toggleMexico()">Mexico</button>
   </div>
   <div id="header-actions">
     <a href="/earth" style="color:#aaa;font-size:13px;text-decoration:none;">Earth</a>
@@ -412,6 +440,41 @@ const ADJ = {
   WI:['IA','IL','MI','MN'],
   WY:['CO','ID','MT','NE','SD','UT'],
 };
+
+const CAN_NEIGHBORS = ['AK','WA','ID','MT','ND','MN','MI','NY','VT','NH','ME'];
+const MEX_NEIGHBORS = ['TX','NM','AZ','CA'];
+
+function toggleCanada() {
+  const active = !document.getElementById('canada-toggle').classList.contains('active');
+  document.getElementById('canada-toggle').classList.toggle('active', active);
+  if (active) {
+    ADJ['CAN'] = [...CAN_NEIGHBORS];
+    CAN_NEIGHBORS.forEach(s => { if (!ADJ[s].includes('CAN')) ADJ[s].push('CAN'); });
+  } else {
+    delete ADJ['CAN'];
+    CAN_NEIGHBORS.forEach(s => { ADJ[s] = ADJ[s].filter(x => x !== 'CAN'); });
+  }
+  if (lockedAbbr) { applyColors(lockedAbbr); updateSidebar(lockedAbbr); }
+}
+
+function toggleMexico() {
+  const active = !document.getElementById('mexico-toggle').classList.contains('active');
+  document.getElementById('mexico-toggle').classList.toggle('active', active);
+  if (active) {
+    ADJ['MEX'] = [...MEX_NEIGHBORS];
+    MEX_NEIGHBORS.forEach(s => { if (!ADJ[s].includes('MEX')) ADJ[s].push('MEX'); });
+  } else {
+    delete ADJ['MEX'];
+    MEX_NEIGHBORS.forEach(s => { ADJ[s] = ADJ[s].filter(x => x !== 'MEX'); });
+  }
+  if (lockedAbbr) { applyColors(lockedAbbr); updateSidebar(lockedAbbr); }
+}
+
+function getLabel(s) {
+  if (s === 'CAN') return 'Canada';
+  if (s === 'MEX') return 'Mexico';
+  return STATE_NAMES[s] || s;
+}
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -652,25 +715,25 @@ function updateSidebar(abbr) {
   }
 
   const unreachable = Object.keys(STATE_NAMES).filter(s => s !== abbr && !(s in dist));
+  const reachableStates = Object.keys(dist).filter(k => k !== abbr && k in STATE_NAMES).length;
+
+  const subtitle = isMobile()
+    ? `Tap handle to close · ${reachableStates} reachable states`
+    : `Click again to unlock · ${reachableStates} reachable states`;
 
   let html = `
     <div id="selected-title">${STATE_NAMES[abbr]}</div>
-    <div id="selected-subtitle">Tap handle to close · ${Object.keys(dist).length - 1} reachable states</div>
+    <div id="selected-subtitle">${subtitle}</div>
   `;
-
-  if (!isMobile()) {
-    html = `
-      <div id="selected-title">${STATE_NAMES[abbr]}</div>
-      <div id="selected-subtitle">Click again to unlock · ${Object.keys(dist).length - 1} reachable states</div>
-    `;
-  }
 
   for (let d = 1; d <= maxDist; d++) {
     if (!groups[d]) continue;
     const color = getColor(d);
+    const stateCount = groups[d].filter(s => s in STATE_NAMES).length;
+    const hasCountry = groups[d].some(s => s === 'CAN' || s === 'MEX');
     const label = d === 1
-      ? `Direct neighbors: ${groups[d].length}`
-      : `${d} away: ${groups[d].length} state${groups[d].length !== 1 ? 's' : ''}`;
+      ? `Direct neighbors: ${stateCount}${hasCountry ? '+' : ''}`
+      : `${d} away: ${stateCount}${hasCountry ? '+' : ''} state${stateCount !== 1 ? 's' : ''}`;
 
     html += `
       <div class="distance-group">
@@ -679,8 +742,8 @@ function updateSidebar(abbr) {
           ${label}
         </div>
         <div class="chips">
-          ${groups[d].sort().map(s =>
-            `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${STATE_NAMES[s]}</span>`
+          ${groups[d].sort((a, b) => getLabel(a).localeCompare(getLabel(b))).map(s =>
+            `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${getLabel(s)}</span>`
           ).join('')}
         </div>
       </div>`;
