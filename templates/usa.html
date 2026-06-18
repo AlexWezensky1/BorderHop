@@ -554,9 +554,17 @@ svg.attr('viewBox', `0 0 ${W} ${H}`);
 
 const projection = d3.geoAlbersUsa().scale(1242).translate([W / 2, H / 2 - 15]);
 const path = d3.geoPath().projection(projection);
-const borderPath = d3.geoPath().projection(
-  d3.geoAlbers().scale(1242).translate([W / 2, H / 2 - 15])
-);
+const borderProj = d3.geoAlbers().scale(1242).translate([W / 2, H / 2 - 15]);
+const borderPath = d3.geoPath().projection(borderProj);
+
+// Clip Canada at ~57°N (shows ~500mi strip near border) and Mexico at ~28°N
+const canClipY = borderProj([-96, 57])[1];
+const mexClipY = borderProj([-104, 28])[1];
+const defs = svg.append('defs');
+defs.append('clipPath').attr('id', 'canada-clip')
+  .append('rect').attr('x', -W).attr('y', canClipY).attr('width', W * 3).attr('height', H * 2);
+defs.append('clipPath').attr('id', 'mexico-clip')
+  .append('rect').attr('x', -W).attr('y', -H).attr('width', W * 3).attr('height', mexClipY + H);
 
 const NEIGHBOR_NEUTRAL = '#b8c8d5';
 
@@ -699,6 +707,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
         .attr('class', 'neighbor-country')
         .attr('data-id', 'CAN')
         .attr('d', borderPath)
+        .attr('clip-path', 'url(#canada-clip)')
         .style('fill', NEIGHBOR_NEUTRAL);
     }
     if (mexico) {
@@ -707,6 +716,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
         .attr('class', 'neighbor-country')
         .attr('data-id', 'MEX')
         .attr('d', borderPath)
+        .attr('clip-path', 'url(#mexico-clip)')
         .style('fill', NEIGHBOR_NEUTRAL);
     }
   });
