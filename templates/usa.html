@@ -337,7 +337,7 @@
 <header>
   <div id="header-text">
     <h1>US State Border Distances</h1>
-    <p>Hover · Click to lock · Right-click to zoom · Right-drag to pan</p>
+    <p>Hover a state to preview distances. Click to lock and see the full list.</p>
   </div>
   <div id="header-center">
     <button id="canada-toggle" class="country-toggle" onclick="toggleCanada()">Canada</button>
@@ -461,7 +461,7 @@ function toggleCanada() {
     delete ADJ['CAN'];
     CAN_NEIGHBORS.forEach(s => { ADJ[s] = ADJ[s].filter(x => x !== 'CAN'); });
   }
-  if (lockedAbbr) { applyColors(lockedAbbr); updateSidebar(lockedAbbr); }
+  if (lockedAbbrs.length) { applyColors(lockedAbbrs); updateSidebar(lockedAbbrs); }
 }
 
 function toggleMexico() {
@@ -474,7 +474,7 @@ function toggleMexico() {
     delete ADJ['MEX'];
     MEX_NEIGHBORS.forEach(s => { ADJ[s] = ADJ[s].filter(x => x !== 'MEX'); });
   }
-  if (lockedAbbr) { applyColors(lockedAbbr); updateSidebar(lockedAbbr); }
+  if (lockedAbbrs.length) { applyColors(lockedAbbrs); updateSidebar(lockedAbbrs); }
 }
 
 function getLabel(s) {
@@ -563,19 +563,15 @@ const mexClipY = borderProj([-104, 28])[1];
 const defs = svg.append('defs');
 defs.append('clipPath').attr('id', 'canada-clip')
   .append('rect').attr('x', -W).attr('y', canClipY).attr('width', W * 3).attr('height', H * 2);
-// Punch out Alaska (x≈-41–208, y≈437–571) and Hawaii (x≈221–332, y≈498–570) insets
-const akHiX2 = 342, akHiY1 = 428, akHiY2 = 582;
+// Diagonal clip: NW corner cut high (y=410, clears Alaska inset at x=208) → SE corner at mexClipY
+const mexClipYNW = 410;
 defs.append('clipPath').attr('id', 'mexico-clip')
   .append('path')
-  .attr('clip-rule', 'evenodd')
-  .attr('d',
-    `M ${-W} ${-H} L ${W * 3} ${-H} L ${W * 3} ${mexClipY} L ${-W} ${mexClipY} Z ` +
-    `M ${-W} ${akHiY1} L ${akHiX2} ${akHiY1} L ${akHiX2} ${akHiY2} L ${-W} ${akHiY2} Z`
-  );
+  .attr('d', `M ${-W} ${-H} L ${W * 3} ${-H} L ${W * 3} ${mexClipY} L ${-W} ${mexClipYNW} Z`);
 
 const NEIGHBOR_NEUTRAL = '#b8c8d5';
 
-let lockedAbbr = null;
+let lockedAbbrs = [];
 const tooltip = document.getElementById('tooltip');
 
 // Build legend
@@ -631,7 +627,7 @@ function openSidebar() {
 }
 
 function closeSidebar() {
-  lockedAbbr = null;
+  lockedAbbrs = [];
   resetColors();
   showPlaceholder();
   document.getElementById('sidebar').classList.remove('open');
@@ -661,7 +657,7 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           tooltip.style.left = (event.clientX + 12) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
 
-          if (!lockedAbbr) {
+          if (lockedAbbrs.length === 0) {
             applyColors(abbr);
             svg.selectAll('.state.hovered').classed('hovered', false);
             d3.select(this).classed('hovered', true).raise();
@@ -671,34 +667,34 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           if (isMobile()) return;
           tooltip.style.display = 'none';
           d3.select(this).classed('hovered', false);
-          if (!lockedAbbr) {
+          if (lockedAbbrs.length === 0) {
             resetColors();
           } else {
-            svg.selectAll('.state')
-              .filter(e => getAbbr(e.id) === lockedAbbr)
-              .raise();
+            lockedAbbrs.forEach(a =>
+              svg.selectAll('.state').filter(e => getAbbr(e.id) === a).raise()
+            );
           }
         })
         .on('click', function(event, d) {
           const abbr = getAbbr(d.id);
           if (!abbr) return;
 
-          if (lockedAbbr === abbr) {
-            closeSidebar();
+          if (lockedAbbrs.includes(abbr)) {
+            lockedAbbrs = lockedAbbrs.filter(a => a !== abbr);
+            if (lockedAbbrs.length === 0) { closeSidebar(); return; }
           } else {
-            lockedAbbr = abbr;
-            applyColors(abbr);
-            updateSidebar(abbr);
-            openSidebar();
+            const wasEmpty = lockedAbbrs.length === 0;
+            lockedAbbrs.push(abbr);
+            if (wasEmpty) openSidebar();
           }
 
+          applyColors(lockedAbbrs);
+          updateSidebar(lockedAbbrs);
+
           svg.selectAll('.state').classed('hovered', false).classed('locked', false);
-          if (lockedAbbr) {
-            svg.selectAll('.state')
-              .filter(e => getAbbr(e.id) === lockedAbbr)
-              .classed('locked', true)
-              .raise();
-          }
+          lockedAbbrs.forEach(a =>
+            svg.selectAll('.state').filter(e => getAbbr(e.id) === a).classed('locked', true).raise()
+          );
         });
   });
 
@@ -728,18 +724,23 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     }
   });
 
-function applyColors(abbr) {
-  const dist = bfs(abbr);
+function applyColors(abbrs) {
+  const arr = Array.isArray(abbrs) ? abbrs : [abbrs];
+  const dists = arr.map(a => bfs(a));
   svg.selectAll('.state').style('fill', function() {
     const a = d3.select(this).attr('data-abbr');
     if (!a) return '#c8d6e5';
-    if (a === abbr) return getColor(0);
-    if (a in dist) return getColor(dist[a]);
-    return '#bbb';
+    if (arr.includes(a)) return getColor(0);
+    let min = Infinity;
+    for (const d of dists) if (a in d) min = Math.min(min, d[a]);
+    return min === Infinity ? '#bbb' : getColor(min);
   });
   svg.selectAll('.neighbor-country').style('fill', function() {
     const id = d3.select(this).attr('data-id');
-    return (id && id in dist) ? getColor(dist[id]) : NEIGHBOR_NEUTRAL;
+    if (!id) return NEIGHBOR_NEUTRAL;
+    let min = Infinity;
+    for (const d of dists) if (id in d) min = Math.min(min, d[id]);
+    return min === Infinity ? NEIGHBOR_NEUTRAL : getColor(min);
   });
 }
 
@@ -763,26 +764,37 @@ function toggleDark() {
   document.getElementById('dark-toggle').textContent = dark ? 'Light' : 'Dark';
 }
 
-function updateSidebar(abbr) {
-  const dist = bfs(abbr);
-  const maxDist = Math.max(...Object.values(dist));
+function updateSidebar(abbrs) {
+  const arr = Array.isArray(abbrs) ? abbrs : [abbrs];
+  const dists = arr.map(a => bfs(a));
 
+  // Combined: min distance from any locked state, excluding the locked states themselves
+  const combined = {};
+  for (const d of dists) {
+    for (const [k, v] of Object.entries(d)) {
+      if (arr.includes(k)) continue;
+      if (!(k in combined) || v < combined[k]) combined[k] = v;
+    }
+  }
+
+  const maxDist = Object.values(combined).length ? Math.max(...Object.values(combined)) : 0;
   const groups = {};
-  for (const [state, d] of Object.entries(dist)) {
-    if (d === 0) continue;
+  for (const [state, d] of Object.entries(combined)) {
     if (!groups[d]) groups[d] = [];
     groups[d].push(state);
   }
 
-  const unreachable = Object.keys(STATE_NAMES).filter(s => s !== abbr && !(s in dist));
-  const reachableStates = Object.keys(dist).filter(k => k !== abbr && k in STATE_NAMES).length;
+  const unreachable = Object.keys(STATE_NAMES).filter(s => !arr.includes(s) && !(s in combined));
+  const reachableStates = Object.keys(combined).filter(k => k in STATE_NAMES).length;
 
   const subtitle = isMobile()
     ? `Tap handle to close · ${reachableStates} reachable states`
-    : `Click again to unlock · ${reachableStates} reachable states`;
+    : arr.length > 1
+      ? `Click a selected state to deselect · ${reachableStates} reachable states`
+      : `Click again to unlock · ${reachableStates} reachable states`;
 
   let html = `
-    <div id="selected-title">${STATE_NAMES[abbr]}</div>
+    <div id="selected-title">${arr.map(a => STATE_NAMES[a]).join(' + ')}</div>
     <div id="selected-subtitle">${subtitle}</div>
   `;
 
