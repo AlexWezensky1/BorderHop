@@ -237,7 +237,8 @@
   body.dark #legend { background: rgba(0,0,0,0.75); color: #ccc; }
   body.dark .chip { color: #fff !important; }
   body.dark .distance-label { color: #ddd; }
-  body.dark #sidebar-handle { background: #444; }
+  body.dark #sidebar-handle { background: transparent; }
+  body.dark #sidebar-close { background: #555; color: #ccc; }
 
   /* ── Mobile ── */
   @media (max-width: 768px) {
@@ -250,7 +251,7 @@
     #header-actions { grid-column: 2; grid-row: 1; }
     #header-center { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; gap: 6px; }
     header h1 { font-size: 16px; }
-    header p  { display: none; }
+    header p  { display: block; font-size: 11px; }
     .country-toggle { padding: 4px 12px; font-size: 12px; }
 
     #main { flex-direction: column; position: relative; }
@@ -293,28 +294,24 @@
 
     #sidebar-handle {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       padding: 10px 12px 4px;
       flex-shrink: 0;
-      position: relative;
-    }
-
-    #sidebar-handle::before {
-      content: '';
-      display: block;
-      width: 40px;
-      height: 4px;
-      background: #ddd;
-      border-radius: 2px;
     }
 
     #sidebar-close {
-      display: block;
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #eee;
+      font-size: 20px;
+      color: #555;
+      border: none;
+      padding: 0;
+      cursor: pointer;
     }
 
     #sidebar-inner {
@@ -791,7 +788,7 @@ function updateSidebar(abbrs) {
   const reachableStates = Object.keys(combined).filter(k => k in STATE_NAMES || k === 'CAN' || k === 'MEX').length;
 
   const subtitle = isMobile()
-    ? `Tap handle to close · ${reachableStates} reachable states`
+    ? `${reachableStates} reachable states`
     : arr.length > 1
       ? `Click a selected state to deselect · ${reachableStates} reachable states`
       : `Click again to unlock · ${reachableStates} reachable states`;
