@@ -495,7 +495,7 @@ const BORDER_RULES = [
   { id: 'ceuta',          label: 'Ceuta/Melilla',  type: 'remove',         edges: [['724','504']] },
   { id: 'w-sahara',       label: 'W. Sahara',      type: 'remove',         edges: [['504','478']] },
   { id: 'palestine',      label: 'Palestine',      type: 'remove-country', ids:   ['275'] },
-  { id: 'fr-fp',          label: 'France w/o Guiana', type: 'remove',      edges: [['250','76'],['250','740']] },
+  { id: 'fr-fp',          label: 'France w/o Guiana', type: 'remove',      edges: [['250','254'],['250','76'],['250','740']] },
 ];
 const activeRules = new Set(BORDER_RULES.map(r => r.id));
 
