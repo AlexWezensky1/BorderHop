@@ -661,7 +661,10 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     worldData = world;
     const features = topojson.feature(world, world.objects.countries).features
       .map(f => {
-        if (f.id === undefined && f.properties?.name === 'Kosovo') f.id = '383';
+        if (f.id === undefined) {
+          if (f.properties?.name === 'Kosovo') f.id = '383';
+          else if (f.properties?.name === 'Somaliland') f.id = '706';
+        }
         return f;
       })
       .filter(f => f.id !== undefined);
