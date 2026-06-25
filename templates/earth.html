@@ -560,6 +560,7 @@ function rebuildADJ() {
   const neighborIndices = topojson.neighbors(geometries);
   geometries.forEach((geo, i) => {
     const id = String(geo.id);
+    if (id === 'undefined') return;
     const neighbors = neighborIndices[i]
       .map(j => String(geometries[j].id))
       .filter(nb => nb !== id);
@@ -658,7 +659,12 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   .then(r => r.json())
   .then(world => {
     worldData = world;
-    const features = topojson.feature(world, world.objects.countries).features;
+    const features = topojson.feature(world, world.objects.countries).features
+      .map(f => {
+        if (f.id === undefined && f.properties?.name === 'Kosovo') f.id = '383';
+        return f;
+      })
+      .filter(f => f.id !== undefined);
 
     rebuildADJ();
     buildRulesPanel();
@@ -727,29 +733,6 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
           }
         });
 
-    // Kosovo: no polygon at 110m — small dot on top of countries
-    const kosovoXY = projection([21.07, 42.56]);
-    if (kosovoXY) {
-      mapGroup.append('circle')
-        .attr('cx', kosovoXY[0]).attr('cy', kosovoXY[1]).attr('r', 2)
-        .attr('fill', 'white').attr('fill-opacity', 0.85)
-        .attr('stroke', '#555').attr('stroke-width', 0.5)
-        .style('cursor', 'pointer')
-        .on('mousemove', function(event) {
-          if (isMobile()) return;
-          tooltip.textContent = 'Kosovo';
-          tooltip.style.display = 'block';
-          tooltip.style.left = (event.clientX + 12) + 'px';
-          tooltip.style.top  = (event.clientY - 28) + 'px';
-          if (!lockedId) applyColors('383');
-        })
-        .on('mouseout', function() {
-          if (isMobile()) return;
-          tooltip.style.display = 'none';
-          if (lockedId) applyColors(lockedId); else resetColors();
-        })
-        .on('click', function() { lockCountry('383'); });
-    }
   });
 
 function lockCountry(id) {
