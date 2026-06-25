@@ -396,7 +396,7 @@ if ('ontouchstart' in window) {
 const COUNTRY_NAMES = {
   '4':'Afghanistan','8':'Albania','12':'Algeria','20':'Andorra','24':'Angola',
   '28':'Antigua and Barbuda','32':'Argentina','36':'Australia','40':'Austria',
-  '31':'Azerbaijan','44':'Bahamas','48':'Bahrain','50':'Bangladesh',
+  '31':'Azerbaijan','44':'Bahamas','48':'Bahrain','50':'Bangladesh','51':'Armenia',
   '52':'Barbados','112':'Belarus','56':'Belgium','84':'Belize',
   '204':'Benin','64':'Bhutan','68':'Bolivia','70':'Bosnia and Herzegovina',
   '72':'Botswana','76':'Brazil','96':'Brunei','100':'Bulgaria',
@@ -726,6 +726,30 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
               .raise();
           }
         });
+
+    // Kosovo: no polygon at 110m — add a clickable dot at its centroid
+    const kosovoXY = projection([21.07, 42.56]);
+    if (kosovoXY) {
+      mapGroup.append('circle')
+        .attr('cx', kosovoXY[0]).attr('cy', kosovoXY[1]).attr('r', 4)
+        .attr('fill', 'white').attr('fill-opacity', 0.85)
+        .attr('stroke', '#555').attr('stroke-width', 0.7)
+        .style('cursor', 'pointer')
+        .on('mousemove', function(event) {
+          if (isMobile()) return;
+          tooltip.textContent = 'Kosovo';
+          tooltip.style.display = 'block';
+          tooltip.style.left = (event.clientX + 12) + 'px';
+          tooltip.style.top  = (event.clientY - 28) + 'px';
+          if (!lockedId) applyColors('383');
+        })
+        .on('mouseout', function() {
+          if (isMobile()) return;
+          tooltip.style.display = 'none';
+          if (lockedId) applyColors(lockedId); else resetColors();
+        })
+        .on('click', function() { lockCountry('383'); });
+    }
   });
 
 function lockCountry(id) {
