@@ -27,17 +27,20 @@
     background: #1a1a2e;
     color: white;
     padding: 12px 24px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 16px;
+    column-gap: 16px;
+    row-gap: 8px;
     flex-shrink: 0;
   }
 
   header h1 { font-size: 20px; font-weight: 600; }
   header p  { font-size: 13px; color: #aaa; }
 
-  #header-text { flex: 1; min-width: 0; }
-  #header-actions { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  #header-text { grid-column: 1; grid-row: 1; min-width: 0; }
+  #header-actions { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
+  #header-center { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
   #main { display: flex; flex: 1; overflow: hidden; }
 
@@ -188,51 +191,13 @@
   }
   #dark-toggle:hover { background: rgba(255,255,255,0.22); }
 
-  #rules-btn {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: white;
-    padding: 6px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-  #rules-btn:hover, #rules-btn.open { background: rgba(255,255,255,0.22); }
-
-  #rules-panel {
-    background: #111122;
-    border-bottom: 1px solid #2a2a4a;
-    padding: 10px 24px;
-    display: none;
-    flex-wrap: wrap;
-    gap: 8px 20px;
-    align-items: flex-start;
-  }
-
-  .rules-group {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .rules-group-label {
-    font-size: 10px;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    padding-right: 2px;
-  }
-
   .rule-chip {
-    font-size: 12px;
-    padding: 3px 10px;
-    border-radius: 12px;
-    border: 1px solid #444;
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
     background: transparent;
-    color: #555;
+    color: rgba(255,255,255,0.45);
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
@@ -241,14 +206,14 @@
 
   .rule-chip.active.add-chip {
     border-color: #4a9;
-    color: #4a9;
-    background: rgba(68,170,136,0.12);
+    color: #5cc;
+    background: rgba(68,170,136,0.18);
   }
 
   .rule-chip.active.remove-chip {
     border-color: #c77;
-    color: #c77;
-    background: rgba(204,119,119,0.12);
+    color: #e99;
+    background: rgba(204,119,119,0.18);
   }
 
   /* dark mode */
@@ -329,8 +294,7 @@
 
     #legend { bottom: 8px; font-size: 10px; gap: 5px; padding: 5px 10px; }
     #tooltip { display: none !important; }
-    #rules-panel { padding: 8px 16px; }
-    #rules-btn { padding: 5px 12px; font-size: 12px; }
+    #header-center { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
   }
 </style>
 </head>
@@ -347,12 +311,10 @@
     <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
     </a>
-    <button id="rules-btn" onclick="toggleRulesPanel()">Rules</button>
     <button id="dark-toggle" onclick="toggleDark()">Dark</button>
   </div>
+  <div id="header-center"></div>
 </header>
-
-<div id="rules-panel"></div>
 
 <div id="main">
   <div id="map-container">
@@ -777,18 +739,12 @@ function toggleDark() {
 }
 
 function buildRulesPanel() {
-  const panel = document.getElementById('rules-panel');
-  const addRules    = BORDER_RULES.filter(r => r.type === 'add');
-  const removeRules = BORDER_RULES.filter(r => r.type !== 'add');
-  function group(label, rules, chipClass) {
-    const chips = rules.map(r =>
-      `<button class="rule-chip ${chipClass}${activeRules.has(r.id) ? ' active' : ''}" data-rule-id="${r.id}" onclick="toggleRule('${r.id}')">${r.label}</button>`
-    ).join('');
-    return `<div class="rules-group"><span class="rules-group-label">${label}</span>${chips}</div>`;
-  }
-  panel.innerHTML =
-    group('Added connections', addRules, 'add-chip') +
-    group('Border overrides', removeRules, 'remove-chip');
+  const center = document.getElementById('header-center');
+  center.innerHTML = BORDER_RULES.map(r => {
+    const chipClass = r.type === 'add' ? 'add-chip' : 'remove-chip';
+    const active = activeRules.has(r.id) ? ' active' : '';
+    return `<button class="rule-chip ${chipClass}${active}" data-rule-id="${r.id}" onclick="toggleRule('${r.id}')">${r.label}</button>`;
+  }).join('');
 }
 
 function toggleRule(id) {
@@ -804,14 +760,6 @@ function toggleRule(id) {
   } else {
     resetColors();
   }
-}
-
-function toggleRulesPanel() {
-  const panel = document.getElementById('rules-panel');
-  const btn   = document.getElementById('rules-btn');
-  const open  = panel.style.display === 'flex';
-  panel.style.display = open ? 'none' : 'flex';
-  btn.classList.toggle('open', !open);
 }
 
 function updateSidebar(id) {
