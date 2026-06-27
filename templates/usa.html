@@ -337,7 +337,7 @@
 <header>
   <div id="header-text">
     <h1>US State Border Distances</h1>
-    <p>Hover to preview. Click to lock. Click multiple states to form a region.</p>
+    <p>Hover · Click to lock · Click multiple to combine · Right-click or scroll to zoom · Right-drag to pan</p>
   </div>
   <div id="header-center">
     <button id="canada-toggle" class="country-toggle" onclick="toggleCanada()">Canada</button>
@@ -367,7 +367,7 @@
     <button id="sidebar-close" onclick="closeSidebar()" aria-label="Close">&#x2715;</button>
     <div id="sidebar-inner">
       <div id="sidebar-placeholder">
-        <p id="placeholder-text">Hover to preview. Click to lock. Click multiple states to form a region.</p>
+        <p id="placeholder-text">Hover to preview. Click to lock. Click multiple to combine.</p>
       </div>
     </div>
   </div>
@@ -592,27 +592,27 @@ const statesGroup = mapGroup.append('g');
 
 const zoomBehavior = d3.zoom()
   .scaleExtent([1, 10])
-  .filter(event => event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2))
+  .filter(event => event.type === 'wheel' || event.button === 2)
   .on('zoom', ({transform}) => mapGroup.attr('transform', transform));
 
 svg.call(zoomBehavior).on('dblclick.zoom', null);
 svg.on('contextmenu', event => event.preventDefault());
 
 let rightStart = null;
-svg.on('mousedown.rc', event => {
+svg.on('pointerdown.rc', event => {
   if (event.button !== 2) return;
   rightStart = [event.clientX, event.clientY];
 });
-svg.on('mouseup.rc', function(event) {
+d3.select(window).on('pointerup.rc', function(event) {
   if (event.button !== 2 || !rightStart) return;
   const dx = event.clientX - rightStart[0], dy = event.clientY - rightStart[1];
   rightStart = null;
-  if (Math.hypot(dx, dy) > 5) return; // was a drag
-  const t = d3.zoomTransform(this);
+  if (Math.hypot(dx, dy) > 5) return;
+  const t = d3.zoomTransform(svg.node());
   if (t.k > 1.2) {
     svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity);
   } else {
-    const [x, y] = d3.pointer(event);
+    const [x, y] = d3.pointer(event, svg.node());
     const k = 4;
     svg.transition().duration(400).call(
       zoomBehavior.transform,
@@ -754,7 +754,7 @@ function resetColors() {
 function showPlaceholder() {
   const text = ('ontouchstart' in window)
     ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
-    : 'Hover to preview. Click to lock. Click multiple states to form a region.';
+    : 'Hover to preview. Click to lock. Click multiple to combine.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder">
       <p>${text}</p>

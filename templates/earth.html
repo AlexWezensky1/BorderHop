@@ -309,7 +309,7 @@
 <header>
   <div id="header-text">
     <h1>World Country Border Distances</h1>
-    <p>Hover · Click to lock · Right-click or scroll to zoom · Right-drag to pan</p>
+    <p>Hover · Click to lock · Click multiple to combine · Right-click or scroll to zoom · Right-drag to pan</p>
   </div>
   <div id="header-dark">
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
@@ -338,7 +338,7 @@
     <button id="sidebar-close" onclick="closeSidebar()" aria-label="Close">&#x2715;</button>
     <div id="sidebar-inner">
       <div id="sidebar-placeholder">
-        <p id="placeholder-text">Hover a country to preview distances. Click to lock and see the full list.</p>
+        <p id="placeholder-text">Hover a country to preview. Click to lock. Click multiple to combine.</p>
       </div>
     </div>
   </div>
@@ -742,7 +742,7 @@ function resetColors() {
 function showPlaceholder() {
   const text = ('ontouchstart' in window)
     ? 'Tap a country to see its border distances.'
-    : 'Hover a country to preview distances. Click to lock and see the full list.';
+    : 'Hover a country to preview. Click to lock. Click multiple to combine.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder"><p>${text}</p></div>`;
 }
