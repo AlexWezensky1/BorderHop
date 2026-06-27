@@ -28,7 +28,7 @@
     color: white;
     padding: 12px 24px;
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     column-gap: 16px;
     row-gap: 8px;
@@ -39,7 +39,8 @@
   header p  { font-size: 13px; color: #aaa; }
 
   #header-text { grid-column: 1; grid-row: 1; min-width: 0; }
-  #header-actions { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
+  #dark-toggle { grid-column: 2; grid-row: 1; }
+  #header-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
   #header-center { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
 
   #main { display: flex; flex: 1; overflow: hidden; }
@@ -310,13 +311,14 @@
     <h1>World Country Border Distances</h1>
     <p>Hover · Click to lock · Right-click or scroll to zoom · Right-drag to pan</p>
   </div>
+  <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
   <div id="header-actions">
     <a href="/usa" class="header-btn">USA</a>
     <button class="header-btn" onclick="document.getElementById('about-modal').style.display='flex'">About</button>
     <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
     </a>
-    <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
+    <button class="header-btn" onclick="closeSidebar()">Reset</button>
   </div>
   <div id="header-center"></div>
 </header>
@@ -568,7 +570,7 @@ svg.attr('viewBox', `0 0 ${W} ${H}`);
 const projection = d3.geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
 const path = d3.geoPath().projection(projection);
 
-let lockedId = null;
+let lockedIds = [];
 let ADJ = {};
 const tooltip = document.getElementById('tooltip');
 
@@ -614,7 +616,7 @@ function openSidebar() {
 }
 
 function closeSidebar() {
-  lockedId = null;
+  lockedIds = [];
   resetColors();
   showPlaceholder();
   document.getElementById('sidebar').classList.remove('open');
@@ -663,8 +665,8 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
           tooltip.style.left = (event.clientX + 12) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
 
-          if (!lockedId) {
-            applyColors(id);
+          if (lockedIds.length === 0) {
+            applyColors([id]);
             svg.selectAll('.country.hovered').classed('hovered', false);
             d3.select(this).classed('hovered', true).raise();
           }
@@ -673,56 +675,63 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
           if (isMobile()) return;
           tooltip.style.display = 'none';
           d3.select(this).classed('hovered', false);
-          if (!lockedId) {
+          if (lockedIds.length === 0) {
             resetColors();
           } else {
-            svg.selectAll('.country')
-              .filter(e => String(e.id) === lockedId)
-              .raise();
+            lockedIds.forEach(x =>
+              svg.selectAll('.country').filter(e => String(e.id) === x).raise()
+            );
           }
         })
         .on('click', function(event, d) {
           const id = String(d.id);
           if (!id || id === 'undefined') return;
 
-          if (lockedId === id) {
-            closeSidebar();
+          if (lockedIds.includes(id)) {
+            lockedIds = lockedIds.filter(x => x !== id);
+            if (lockedIds.length === 0) { closeSidebar(); return; }
           } else {
-            lockedId = id;
-            applyColors(id);
-            updateSidebar(id);
-            openSidebar();
+            const wasEmpty = lockedIds.length === 0;
+            lockedIds.push(id);
+            if (wasEmpty) openSidebar();
           }
 
+          applyColors(lockedIds);
+          updateSidebar(lockedIds);
           svg.selectAll('.country').classed('hovered', false).classed('locked', false);
-          if (lockedId) {
-            svg.selectAll('.country')
-              .filter(e => String(e.id) === lockedId)
-              .classed('locked', true)
-              .raise();
-          }
+          lockedIds.forEach(x =>
+            svg.selectAll('.country').filter(e => String(e.id) === x).classed('locked', true).raise()
+          );
         });
 
   });
 
 function lockCountry(id) {
-  if (lockedId === id) { closeSidebar(); return; }
-  lockedId = id;
-  applyColors(id);
-  updateSidebar(id);
-  openSidebar();
+  if (lockedIds.includes(id)) {
+    lockedIds = lockedIds.filter(x => x !== id);
+    if (lockedIds.length === 0) { closeSidebar(); return; }
+  } else {
+    const wasEmpty = lockedIds.length === 0;
+    lockedIds.push(id);
+    if (wasEmpty) openSidebar();
+  }
+  applyColors(lockedIds);
+  updateSidebar(lockedIds);
   svg.selectAll('.country').classed('hovered', false).classed('locked', false);
-  svg.selectAll('.country').filter(e => String(e.id) === id).classed('locked', true).raise();
+  lockedIds.forEach(x =>
+    svg.selectAll('.country').filter(e => String(e.id) === x).classed('locked', true).raise()
+  );
 }
 
-function applyColors(id) {
-  const dist = bfs(id);
+function applyColors(ids) {
+  const arr = Array.isArray(ids) ? ids : [ids];
+  const dists = arr.map(id => bfs(id));
   svg.selectAll('.country').style('fill', function() {
     const a = d3.select(this).attr('data-id');
     if (!a) return '#c8d6e5';
-    if (a === id) return getColor(0);
-    if (a in dist) return getColor(dist[a]);
-    return '#bbb';
+    if (arr.includes(a)) return getColor(0);
+    const min = Math.min(...dists.map(d => d[a] ?? Infinity));
+    return min === Infinity ? '#bbb' : getColor(min);
   });
 }
 
@@ -759,37 +768,45 @@ function toggleRule(id) {
     btn.classList.toggle('active', activeRules.has(btn.dataset.ruleId));
   });
   rebuildADJ();
-  if (lockedId) {
-    applyColors(lockedId);
-    updateSidebar(lockedId);
+  if (lockedIds.length) {
+    applyColors(lockedIds);
+    updateSidebar(lockedIds);
   } else {
     resetColors();
   }
 }
 
-function updateSidebar(id) {
-  const dist = bfs(id);
-  const maxDist = dist && Object.keys(dist).length > 1
-    ? Math.max(...Object.values(dist))
-    : 0;
+function updateSidebar(ids) {
+  const arr = Array.isArray(ids) ? ids : [ids];
+  const dists = arr.map(id => bfs(id));
+
+  const combined = {};
+  for (const d of dists) {
+    for (const [cId, dist] of Object.entries(d)) {
+      if (arr.includes(cId)) continue;
+      if (!(cId in combined) || dist < combined[cId]) combined[cId] = dist;
+    }
+  }
+
+  const maxDist = Object.values(combined).length > 0 ? Math.max(...Object.values(combined)) : 0;
 
   const groups = {};
-  for (const [cId, d] of Object.entries(dist)) {
-    if (d === 0) continue;
+  for (const [cId, d] of Object.entries(combined)) {
     if (!groups[d]) groups[d] = [];
     groups[d].push(cId);
   }
 
   const allIds = Object.keys(ADJ);
-  const unreachable = allIds.filter(c => c !== id && !(c in dist));
+  const unreachable = allIds.filter(c => !arr.includes(c) && !(c in combined));
 
-  const reachableCount = Object.keys(dist).length - 1;
-  const subtitle = isMobile()
-    ? `${reachableCount} reachable`
-    : `Click again to unlock · ${reachableCount} reachable`;
+  const reachableCount = Object.keys(combined).length;
+  const title = arr.map(id => getCountryName(id)).join(' + ');
+  const subtitle = arr.length === 1
+    ? (isMobile() ? `${reachableCount} reachable` : `Click again to deselect · ${reachableCount} reachable`)
+    : (isMobile() ? `${reachableCount} reachable` : `Click to deselect · ${reachableCount} reachable`);
 
   let html = `
-    <div id="selected-title">${getCountryName(id)}</div>
+    <div id="selected-title">${title}</div>
     <div id="selected-subtitle">${subtitle}</div>
   `;
 
