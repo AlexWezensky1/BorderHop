@@ -39,7 +39,7 @@
   header p  { font-size: 13px; color: #aaa; }
 
   #header-text { grid-column: 1; grid-row: 1; min-width: 0; }
-  #dark-toggle { grid-column: 2; grid-row: 1; }
+  #header-dark { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 8px; }
   #header-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
   #header-center { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
 
@@ -311,14 +311,16 @@
     <h1>World Country Border Distances</h1>
     <p>Hover · Click to lock · Right-click or scroll to zoom · Right-drag to pan</p>
   </div>
-  <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
+  <div id="header-dark">
+    <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
+    <button class="header-btn" onclick="closeSidebar()">Reset</button>
+  </div>
   <div id="header-actions">
     <a href="/usa" class="header-btn">USA</a>
     <button class="header-btn" onclick="document.getElementById('about-modal').style.display='flex'">About</button>
     <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
     </a>
-    <button class="header-btn" onclick="closeSidebar()">Reset</button>
   </div>
   <div id="header-center"></div>
 </header>
@@ -347,11 +349,9 @@
 <div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
   <div style="background:white;border-radius:12px;padding:32px;max-width:420px;width:90%;position:relative;font-size:15px;line-height:1.7;color:#222;">
     <button onclick="document.getElementById('about-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">&#x2715;</button>
-    <p>Made for Season 18 of <strong>Jet Lag: The Game</strong>.</p>
+    <p>Made as a resource for <a href="https://travle.earth/" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Travle</a>.</p>
     <br>
-    <p>Watch on <a href="https://nebula.tv/jetlag" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Nebula</a> and <a href="https://www.youtube.com/c/jetlagthegame" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Youtube!</a></p>
-    <br>
-    <p style="color:#888;font-size:13px;">Made with Claude Code, Sonnet 4.6, low effort, in 4 hours.</p>
+    <p style="color:#888;font-size:13px;">Made with Claude Code, Sonnet 4.6, low effort, in 10 hours.</p>
   </div>
 </div>
 
