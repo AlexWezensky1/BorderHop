@@ -626,7 +626,7 @@ function closeSidebar() {
   svg.selectAll('.country').classed('hovered', false).classed('locked', false);
 }
 
-fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json')
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
   .then(r => r.json())
   .then(world => {
     worldData = world;
