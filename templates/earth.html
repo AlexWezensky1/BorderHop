@@ -313,7 +313,8 @@
   </div>
   <div id="header-dark">
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
-    <button class="header-btn" onclick="closeSidebar()">Reset</button>
+    <button class="header-btn" onclick="closeSidebar()">Reset Countries</button>
+    <button class="header-btn" onclick="resetRules()">Reset Rules</button>
   </div>
   <div id="header-actions">
     <a href="/usa" class="header-btn">USA</a>
@@ -350,6 +351,8 @@
   <div style="background:white;border-radius:12px;padding:32px;max-width:420px;width:90%;position:relative;font-size:15px;line-height:1.7;color:#222;">
     <button onclick="document.getElementById('about-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">&#x2715;</button>
     <p>Made as a resource for <a href="https://travle.earth/" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Travle</a>.</p>
+    <br>
+    <p>Default rules are based on <a href="https://travle.earth/extra_info" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">these guidelines</a>.</p>
     <br>
     <p style="color:#888;font-size:13px;">Made with Claude Code, Sonnet 4.6, low effort, in 10 hours.</p>
   </div>
@@ -469,17 +472,20 @@ const DIST_COLORS = [
 ];
 
 const BORDER_RULES = [
-  { id: 'channel-tunnel', label: 'Channel Tunnel',     type: 'add',            edges: [['250','826']] },
-  { id: 'oresund',        label: 'Øresund',            type: 'add',            edges: [['208','752']] },
-  { id: 'hans-island',    label: 'Hans Island',        type: 'add',            edges: [['304','124']] },
-  { id: 'kosovo',         label: 'Kosovo',             type: 'add',            edges: [['383','688'],['383','008'],['383','807'],['383','499']] },
-  { id: 'cabinda',        label: 'Cabinda',            type: 'remove',         edges: [['024','178']] },
-  { id: 'nakhchivan',     label: 'Nakhchivan',         type: 'remove',         edges: [['031','792']] },
-  { id: 'kaliningrad',    label: 'Kaliningrad',        type: 'remove',         edges: [['643','616'],['643','440']] },
-  { id: 'palestine',      label: 'Palestine',          type: 'remove-country', ids:   ['275'] },
-  { id: 'fr-fp',          label: 'France w/o Guiana', type: 'remove',         edges: [['250','076'],['250','740']] },
+  { id: 'channel-tunnel', label: 'Channel Tunnel',            type: 'add',            edges: [['250','826']] },
+  { id: 'oresund',        label: 'Øresund',                   type: 'add',            edges: [['208','752']] },
+  { id: 'hans-island',    label: 'Hans Island',               type: 'add',            edges: [['304','124']] },
+  { id: 'bahrain-sa',     label: 'Bahrain–Saudi Arabia',      type: 'add',            edges: [['048','682']] },
+  { id: 'kosovo',         label: 'Kosovo',                    type: 'add',            edges: [['383','688'],['383','008'],['383','807'],['383','499']] },
+  { id: 'ceuta',          label: 'Ceuta and Melilla (Spain)', type: 'add',            edges: [['724','504']] },
+  { id: 'cabinda',        label: 'Cabinda (Angola)',          type: 'remove',         edges: [['024','178']] },
+  { id: 'nakhchivan',     label: 'Nakhchivan (Azerbaijan)',   type: 'remove',         edges: [['031','792']] },
+  { id: 'kaliningrad',    label: 'Kaliningrad (Russia)',      type: 'remove',         edges: [['643','616'],['643','440']] },
+  { id: 'palestine',      label: 'Palestine',                 type: 'remove-country', ids: ['275'], hidden: true },
+  { id: 'fr-fp',          label: 'France with Guiana',        type: 'add',            edges: [['250','076'],['250','740']] },
 ];
-const activeRules = new Set(BORDER_RULES.map(r => r.id));
+const DEFAULT_ACTIVE_RULES = new Set(['channel-tunnel', 'oresund', 'hans-island', 'bahrain-sa', 'kosovo', 'palestine']);
+const activeRules = new Set(DEFAULT_ACTIVE_RULES);
 
 let MAX_DIST = DIST_COLORS.length - 1;
 
@@ -543,7 +549,7 @@ function rebuildADJ() {
     if (id === 'undefined') return;
     const neighbors = neighborIndices[i]
       .map(j => String(geometries[j].id))
-      .filter(nb => nb !== id);
+      .filter(nb => nb !== id && nb !== 'undefined');
     if (!ADJ[id]) {
       ADJ[id] = neighbors;
     } else {
@@ -551,6 +557,8 @@ function rebuildADJ() {
       ADJ[id] = [...merged];
     }
   });
+  removeEdge('250', '076');
+  removeEdge('250', '740');
   for (const rule of BORDER_RULES) {
     if (!activeRules.has(rule.id)) continue;
     if (rule.type === 'add') {
@@ -765,11 +773,22 @@ function toggleDark() {
 
 function buildRulesPanel() {
   const center = document.getElementById('header-center');
-  center.innerHTML = BORDER_RULES.map(r => {
+  center.innerHTML = BORDER_RULES.filter(r => !r.hidden).map(r => {
     const chipClass = r.type === 'add' ? 'add-chip' : 'remove-chip';
     const active = activeRules.has(r.id) ? ' active' : '';
     return `<button class="rule-chip ${chipClass}${active}" data-rule-id="${r.id}" onclick="toggleRule('${r.id}')">${r.label}</button>`;
   }).join('');
+}
+
+function resetRules() {
+  activeRules.clear();
+  for (const id of DEFAULT_ACTIVE_RULES) activeRules.add(id);
+  document.querySelectorAll('.rule-chip').forEach(btn => {
+    btn.classList.toggle('active', activeRules.has(btn.dataset.ruleId));
+  });
+  rebuildADJ();
+  if (lockedIds.length) { applyColors(lockedIds); updateSidebar(lockedIds); }
+  else { resetColors(); }
 }
 
 function toggleRule(id) {
