@@ -46,10 +46,9 @@
   @media (max-width: 640px) {
     header { grid-template-columns: 1fr; padding: 10px 16px; }
     #header-text { grid-column: 1; grid-row: 1; }
-    #header-dark { grid-column: 1; grid-row: 2; flex-direction: column; align-items: stretch; gap: 6px; }
-    #header-actions { grid-column: 1; grid-row: 3; flex-direction: column; align-items: stretch; gap: 6px; justify-content: flex-start; }
+    #header-dark { grid-column: 1; grid-row: 2; flex-wrap: wrap; justify-content: center; }
+    #header-actions { grid-column: 1; grid-row: 3; flex-wrap: wrap; justify-content: center; }
     #header-center { grid-column: 1; grid-row: 4; }
-    .header-btn { justify-content: center; }
   }
 
   #main { display: flex; flex: 1; overflow: hidden; }
@@ -593,7 +592,7 @@ function rebuildADJ() {
 
 const svg = d3.select('#map');
 const W = 960, H = 500;
-svg.attr('viewBox', `0 0 ${W} ${H}`);
+svg.attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMin meet');
 
 const projection = d3.geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
 const path = d3.geoPath().projection(projection);
