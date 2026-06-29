@@ -782,7 +782,7 @@ function toggleDark() {
 function buildRulesPanel() {
   const center = document.getElementById('header-center');
   center.innerHTML = BORDER_RULES.filter(r => !r.hidden).map(r => {
-    const chipClass = r.type === 'add' ? 'add-chip' : 'remove-chip';
+    const chipClass = 'add-chip';
     const active = activeRules.has(r.id) ? ' active' : '';
     return `<button class="rule-chip ${chipClass}${active}" data-rule-id="${r.id}" onclick="toggleRule('${r.id}')">${r.label}</button>`;
   }).join('');
