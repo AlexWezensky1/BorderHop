@@ -593,7 +593,7 @@ const statesGroup = mapGroup.append('g');
 
 const zoomBehavior = d3.zoom()
   .scaleExtent([1, 10])
-  .filter(event => event.type === 'wheel' || event.button === 2 || event.button === 0)
+  .filter(event => event.type === 'wheel' || event.button === 2 || !event.button)
   .on('zoom', ({transform}) => mapGroup.attr('transform', transform));
 
 svg.call(zoomBehavior).on('dblclick.zoom', null);
