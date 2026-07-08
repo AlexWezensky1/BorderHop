@@ -189,6 +189,8 @@
     white-space: nowrap;
     color: #000;
   }
+  .chip.clickable { cursor: pointer; }
+  .chip.clickable:hover { filter: brightness(0.9); }
 
   #legend {
     position: absolute;
@@ -826,6 +828,23 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
     }
   });
 
+function lockState(abbr) {
+  if (lockedAbbrs.includes(abbr)) {
+    lockedAbbrs = lockedAbbrs.filter(a => a !== abbr);
+    if (lockedAbbrs.length === 0) { closeSidebar(); return; }
+  } else {
+    const wasEmpty = lockedAbbrs.length === 0;
+    lockedAbbrs.push(abbr);
+    if (wasEmpty) openSidebar();
+  }
+  applyColors(lockedAbbrs);
+  updateSidebar(lockedAbbrs);
+  svg.selectAll('.state').classed('hovered', false).classed('locked', false);
+  lockedAbbrs.forEach(a =>
+    svg.selectAll('.state').filter(e => getAbbr(e.id) === a).classed('locked', true).raise()
+  );
+}
+
 function applyColors(abbrs) {
   const arr = Array.isArray(abbrs) ? abbrs : [abbrs];
   const dists = arr.map(a => bfs(a));
@@ -921,7 +940,9 @@ function updateSidebar(abbrs) {
         </div>
         <div class="chips">
           ${groups[d].sort((a, b) => getLabel(a).localeCompare(getLabel(b))).map(s =>
-            `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${getLabel(s)}</span>`
+            s in STATE_NAMES
+              ? `<span class="chip clickable" style="background:${color}33;border:1px solid ${color}88;" onclick="lockState('${s}')">${getLabel(s)}</span>`
+              : `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${getLabel(s)}</span>`
           ).join('')}
         </div>
       </div>`;
