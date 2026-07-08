@@ -241,6 +241,59 @@
   }
   .header-btn:hover { background: rgba(255,255,255,0.22); color: white; }
 
+  /* ── Border game ── */
+  #game-panel {
+    width: 300px;
+    background: white;
+    border-right: 1px solid #ddd;
+    display: none;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  body.game-on #game-panel { display: flex; }
+  body.game-on #legend { display: none; }
+  #game-panel-inner { padding: 20px; overflow-y: auto; flex: 1; }
+  #game-panel .panel-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
+  #game-panel .panel-subtitle { font-size: 12px; color: #888; margin-bottom: 18px; }
+  .tracker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .tracker-row .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .tracker-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 84px;
+    flex-shrink: 0;
+  }
+  .tracker-empty { color: #bbb; font-size: 12px; }
+  .game-win {
+    background: #e8f8ee;
+    border: 1px solid #7cc98f;
+    color: #1e7d3e;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  #tracker-toggle {
+    display: none;
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    z-index: 60;
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
   /* dark mode */
   body.dark { background: #4A4A4A; }
   body.dark #map-container { background: #4A4A4A; }
@@ -253,6 +306,12 @@
   body.dark .distance-label { color: #ddd; }
   body.dark #sidebar-handle { background: transparent; }
   body.dark #sidebar-close { background: #555; color: #ccc; }
+  body.dark #game-panel { background: #2a2a3e; border-right-color: #444; }
+  body.dark #game-panel .panel-title { color: #fff; }
+  body.dark #game-panel .panel-subtitle { color: #bbb; }
+  body.dark .tracker-label { color: #ddd; }
+  body.dark .tracker-row .chip { color: #fff; }
+  body.dark .game-win { background: #1e3a28; border-color: #2e7d4a; color: #7ce09b; }
 
   /* ── Mobile ── */
   @media (max-width: 768px) {
@@ -263,7 +322,7 @@
     }
     #header-text   { grid-column: 1; grid-row: 1; }
     #header-actions { grid-column: 2; grid-row: 1; }
-    #header-center { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; }
+    #header-center { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; flex-wrap: wrap; }
     header h1 { font-size: 16px; }
     header p  { display: block; font-size: 11px; }
     .country-toggle { padding: 4px 10px; font-size: 11px; }
@@ -339,6 +398,23 @@
     }
 
     #tooltip { display: none !important; }
+
+    #game-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 45vh;
+      border-right: none;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 55;
+    }
+    #game-panel.open { transform: translateY(0); }
+    body.game-on #tracker-toggle { display: block; }
   }
 </style>
 </head>
@@ -354,6 +430,7 @@
     <button id="mexico-toggle" class="country-toggle" onclick="toggleMexico()">Mexico</button>
     <button id="clear-toggle" class="country-toggle" onclick="closeSidebar()">Reset</button>
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
+    <button id="game-toggle" class="country-toggle" onclick="toggleGame()">Game</button>
   </div>
   <div id="header-actions">
     <a href="/earth" class="header-btn">Earth</a>
@@ -365,6 +442,9 @@
 </header>
 
 <div id="main">
+  <div id="game-panel">
+    <div id="game-panel-inner"></div>
+  </div>
   <div id="map-container">
     <svg id="map"></svg>
     <div id="legend">
@@ -382,6 +462,8 @@
     </div>
   </div>
 </div>
+
+<button id="tracker-toggle" onclick="toggleTracker()">Tracker</button>
 
 <div id="tooltip"></div>
 
@@ -645,6 +727,7 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('map-container').classList.remove('sidebar-open');
   svg.selectAll('.state').classed('hovered', false).classed('locked', false);
+  if (gameOn) { gameSlots = {}; paintGame(); updateTracker(); }
 }
 
 fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
@@ -669,6 +752,8 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           tooltip.style.left = (event.clientX + 12) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
 
+          if (gameOn) return;
+
           if (lockedAbbrs.length === 0) {
             applyColors(abbr);
             svg.selectAll('.state.hovered').classed('hovered', false);
@@ -679,6 +764,7 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
           if (isMobile()) return;
           tooltip.style.display = 'none';
           d3.select(this).classed('hovered', false);
+          if (gameOn) return;
           if (lockedAbbrs.length === 0) {
             resetColors();
           } else {
@@ -690,6 +776,8 @@ fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
         .on('click', function(event, d) {
           const abbr = getAbbr(d.id);
           if (!abbr) return;
+
+          if (gameOn) { gameGuess(abbr); return; }
 
           if (lockedAbbrs.includes(abbr)) {
             lockedAbbrs = lockedAbbrs.filter(a => a !== abbr);
@@ -762,9 +850,11 @@ function resetColors() {
 }
 
 function showPlaceholder() {
-  const text = ('ontouchstart' in window)
-    ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
-    : 'Hover to preview. Click to lock. Click multiple to combine.';
+  const text = gameOn
+    ? 'Game mode: click a state to fill its border-count slot.'
+    : ('ontouchstart' in window)
+      ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
+      : 'Hover to preview. Click to lock. Click multiple to combine.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder">
       <p>${text}</p>
@@ -853,6 +943,75 @@ function updateSidebar(abbrs) {
   }
 
   document.getElementById('sidebar-inner').innerHTML = html;
+}
+
+// ── Border count game ────────────────────────────────────────────────────────
+let gameOn = false;
+let gameSlots = {};   // border count -> chosen state abbr
+
+function stateBorderCount(abbr) {
+  return (ADJ[abbr] || []).filter(x => x in STATE_NAMES).length;
+}
+
+const GAME_NUMBERS = [...new Set(Object.keys(STATE_NAMES).map(stateBorderCount))].sort((a, b) => a - b);
+
+function toggleGame() {
+  gameOn = !gameOn;
+  document.getElementById('game-toggle').classList.toggle('active', gameOn);
+  document.body.classList.toggle('game-on', gameOn);
+  document.getElementById('game-panel').classList.remove('open');
+  closeSidebar();
+}
+
+function toggleTracker() {
+  document.getElementById('game-panel').classList.toggle('open');
+}
+
+function gameGuess(abbr) {
+  const n = stateBorderCount(abbr);
+  if (gameSlots[n] === abbr) delete gameSlots[n];
+  else gameSlots[n] = abbr;
+  paintGame();
+  updateTracker();
+}
+
+function paintGame() {
+  const assigned = {};
+  for (const [n, a] of Object.entries(gameSlots)) assigned[a] = +n;
+  svg.selectAll('.state')
+    .classed('locked', function() { return d3.select(this).attr('data-abbr') in assigned; })
+    .style('fill', function() {
+      const a = d3.select(this).attr('data-abbr');
+      return a && a in assigned ? getColor(assigned[a]) : '#c8d6e5';
+    });
+  svg.selectAll('.neighbor-country').style('fill', NEIGHBOR_NEUTRAL);
+}
+
+function updateTracker() {
+  const filled = GAME_NUMBERS.filter(n => n in gameSlots).length;
+  const total = GAME_NUMBERS.length;
+  const won = filled === total;
+
+  let html = `
+    <div class="panel-title">Border Game</div>
+    <div class="panel-subtitle">Pick a state with each number of neighbors · ${filled}/${total}</div>`;
+  if (won) html += `<div class="game-win">🎉 You win! Every border count found.</div>`;
+  for (const n of GAME_NUMBERS) {
+    const a = gameSlots[n];
+    const color = getColor(n);
+    const label = `${n} border${n === 1 ? '' : 's'}`;
+    html += `
+      <div class="tracker-row">
+        <span class="dot" style="background:${color}"></span>
+        <span class="tracker-label">${label}</span>
+        ${a
+          ? `<span class="chip" style="background:${color}33;border:1px solid ${color}88;">${STATE_NAMES[a]}</span>`
+          : `<span class="tracker-empty">?</span>`}
+      </div>`;
+  }
+  document.getElementById('game-panel-inner').innerHTML = html;
+  document.getElementById('tracker-toggle').textContent = `Tracker ${filled}/${total}`;
+  if (won && isMobile()) document.getElementById('game-panel').classList.add('open');
 }
 </script>
 </body>
