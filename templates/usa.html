@@ -245,13 +245,14 @@
   #game-panel {
     width: 300px;
     background: white;
-    border-right: 1px solid #ddd;
+    border-left: 1px solid #ddd;
     display: none;
     flex-direction: column;
     flex-shrink: 0;
     overflow: hidden;
   }
   body.game-on #game-panel { display: flex; }
+  body.game-on #sidebar { display: none; }
   body.game-on #legend { display: none; }
   #game-panel-inner { padding: 20px; overflow-y: auto; flex: 1; }
   #game-panel .panel-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #1a1a2e; }
@@ -306,7 +307,7 @@
   body.dark .distance-label { color: #ddd; }
   body.dark #sidebar-handle { background: transparent; }
   body.dark #sidebar-close { background: #555; color: #ccc; }
-  body.dark #game-panel { background: #2a2a3e; border-right-color: #444; }
+  body.dark #game-panel { background: #2a2a3e; border-left-color: #444; }
   body.dark #game-panel .panel-title { color: #fff; }
   body.dark #game-panel .panel-subtitle { color: #bbb; }
   body.dark .tracker-label { color: #ddd; }
@@ -406,7 +407,7 @@
       right: 0;
       width: 100%;
       height: 45vh;
-      border-right: none;
+      border-left: none;
       border-radius: 16px 16px 0 0;
       box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
       transform: translateY(100%);
@@ -428,9 +429,9 @@
   <div id="header-center">
     <button id="canada-toggle" class="country-toggle" onclick="toggleCanada()">Canada</button>
     <button id="mexico-toggle" class="country-toggle" onclick="toggleMexico()">Mexico</button>
+    <button id="game-toggle" class="country-toggle" onclick="toggleGame()">Game Mode</button>
     <button id="clear-toggle" class="country-toggle" onclick="closeSidebar()">Reset</button>
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
-    <button id="game-toggle" class="country-toggle" onclick="toggleGame()">Game</button>
   </div>
   <div id="header-actions">
     <a href="/earth" class="header-btn">Earth</a>
@@ -442,14 +443,15 @@
 </header>
 
 <div id="main">
-  <div id="game-panel">
-    <div id="game-panel-inner"></div>
-  </div>
   <div id="map-container">
     <svg id="map"></svg>
     <div id="legend">
       <span style="font-weight:600;margin-right:4px;">Distance:</span>
     </div>
+  </div>
+
+  <div id="game-panel">
+    <div id="game-panel-inner"></div>
   </div>
 
   <div id="sidebar">
@@ -850,11 +852,9 @@ function resetColors() {
 }
 
 function showPlaceholder() {
-  const text = gameOn
-    ? 'Game mode: click a state to fill its border-count slot.'
-    : ('ontouchstart' in window)
-      ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
-      : 'Hover to preview. Click to lock. Click multiple to combine.';
+  const text = ('ontouchstart' in window)
+    ? 'Tap to preview. Tap to lock. Tap multiple states to form a region.'
+    : 'Hover to preview. Click to lock. Click multiple to combine.';
   document.getElementById('sidebar-inner').innerHTML = `
     <div id="sidebar-placeholder">
       <p>${text}</p>
@@ -957,7 +957,9 @@ const GAME_NUMBERS = [...new Set(Object.keys(STATE_NAMES).map(stateBorderCount))
 
 function toggleGame() {
   gameOn = !gameOn;
-  document.getElementById('game-toggle').classList.toggle('active', gameOn);
+  const btn = document.getElementById('game-toggle');
+  btn.classList.toggle('active', gameOn);
+  btn.textContent = gameOn ? 'List Mode' : 'Game Mode';
   document.body.classList.toggle('game-on', gameOn);
   document.getElementById('game-panel').classList.remove('open');
   closeSidebar();
@@ -995,7 +997,7 @@ function updateTracker() {
   let html = `
     <div class="panel-title">Border Game</div>
     <div class="panel-subtitle">Pick a state with each number of neighbors · ${filled}/${total}</div>`;
-  if (won) html += `<div class="game-win">🎉 You win! Every border count found.</div>`;
+  if (won) html += `<div class="game-win">You win! Every border count found.</div>`;
   for (const n of GAME_NUMBERS) {
     const a = gameSlots[n];
     const color = getColor(n);
