@@ -91,8 +91,8 @@
     transition: fill 0.15s ease;
   }
 
-  .country:hover { stroke-width: 1.2px; stroke: #333; }
-  .country.locked, .country.hovered { stroke: #000 !important; stroke-width: 1.8px !important; }
+  .country:hover { stroke-width: calc(var(--sw, 1.8px) * 0.7); stroke: #333; }
+  .country.locked, .country.hovered { stroke: #000 !important; stroke-width: var(--sw, 1.8px) !important; }
 
   #sidebar {
     width: 300px;
@@ -700,6 +700,14 @@ svg.attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMin meet'
 const projection = d3.geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
 const path = d3.geoPath().projection(projection);
 
+// Selection outline width scaled by country size: ~0.5px for the smallest
+// up to 1.8px for the largest. Uses projected area (not bounds) so countries
+// split across the antimeridian (Fiji, Russia) aren't overestimated.
+function outlineWidth(d) {
+  const size = Math.sqrt(path.area(d));
+  return Math.max(0.5, Math.min(1.8, 0.28 * Math.sqrt(size)));
+}
+
 let lockedIds = [];
 let ADJ = {};
 const tooltip = document.getElementById('tooltip');
@@ -785,6 +793,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
         .attr('class', 'country')
         .attr('d', path)
         .attr('data-id', d => String(d.id))
+        .style('--sw', d => outlineWidth(d) + 'px')
         .style('fill', '#c8d6e5')
         .on('mousemove', function(event, d) {
           if (isMobile()) return;
