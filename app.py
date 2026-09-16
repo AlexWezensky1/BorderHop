@@ -7,10 +7,15 @@ app = Flask(__name__)
 def set_security_headers(response):
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net "
+        "https://www.googletagmanager.com https://gc.zgo.at https://cloud.umami.is; "
         "style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self' https://cdn.jsdelivr.net; "
-        "img-src 'self' data:; "
+        "connect-src 'self' https://cdn.jsdelivr.net "
+        "https://www.google-analytics.com https://*.google-analytics.com "
+        "https://analytics.google.com https://*.analytics.google.com "
+        "https://borderhop.goatcounter.com "
+        "https://cloud.umami.is https://gateway.umami.is https://api-gateway.umami.dev; "
+        "img-src 'self' data: https://www.google-analytics.com https://gc.zgo.at; "
         "frame-ancestors 'none';"
     )
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -29,6 +34,10 @@ def usa():
 @app.route('/earth')
 def earth():
     return render_template('earth.html')
+
+@app.route('/japan')
+def japan():
+    return render_template('japan.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
