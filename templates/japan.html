@@ -407,7 +407,7 @@
   }
 </style>
 </head>
-<body class="no-okinawa">
+<body class="no-okinawa teams-on">
 
 <header>
   <div id="header-text">
@@ -415,11 +415,11 @@
     <p>Hover · Click to lock · Click multiple to combine · Right-click or scroll to zoom</p>
   </div>
   <div id="header-center">
+    <button id="teams-toggle" class="country-toggle active" onclick="toggleTeams()">Teams</button>
+    <button id="shink-toggle" class="country-toggle active" onclick="toggleShinkansen()">Shinkansen</button>
     <button id="islands-toggle" class="country-toggle active" onclick="toggleIslands()"
             title="Count the Seikan Tunnel, the Kanmon crossing and the Honshu–Shikoku bridges as borders">Islands</button>
     <button id="okinawa-toggle" class="country-toggle" onclick="toggleOkinawa()">Okinawa</button>
-    <button id="shink-toggle" class="country-toggle active" onclick="toggleShinkansen()">Shinkansen</button>
-    <button id="teams-toggle" class="country-toggle" onclick="toggleTeams()">Teams</button>
     <button id="clear-toggle" class="country-toggle" onclick="closeSidebar()">Reset</button>
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
   </div>
@@ -576,10 +576,18 @@ const DIST_COLORS = [
   '#C2E9F6', // 15
 ];
 
-// Ten distinguishable team colours.
+// Ten standard team colors, in rainbow order.
 const TEAM_COLORS = [
-  '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4',
-  '#22c8e0', '#f032e6', '#a5c92a', '#469990', '#9a6324'
+  '#E53935', // red
+  '#FB8C00', // orange
+  '#FDD835', // yellow
+  '#C0CA33', // lime
+  '#43A047', // green
+  '#00897B', // teal
+  '#00ACC1', // cyan
+  '#1E88E5', // blue
+  '#5E35B1', // indigo
+  '#8E24AA', // violet
 ];
 
 function getColor(d) {
@@ -781,7 +789,7 @@ function assignTeam(code) {
 function stripePattern(indices) {
   const id = 'stripe-' + indices.join('-');
   if (document.getElementById(id)) return id;
-  const sw = 5;
+  const sw = 10 / 3;   // two thirds of the original 5px stripe
   const p = defs.append('pattern')
     .attr('id', id)
     .attr('width', sw * indices.length)
