@@ -38,6 +38,7 @@
     padding: 12px 24px;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto auto;
     align-items: center;
     column-gap: 16px;
     flex-shrink: 0;
@@ -46,9 +47,38 @@
   header h1 { font-size: 20px; font-weight: 600; }
   header p  { font-size: 13px; color: #aaa; }
 
-  #header-text { min-width: 0; }
-  #header-center { display: flex; align-items: center; gap: 8px; justify-content: center; }
-  #header-actions { display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
+  #header-text    { grid-column: 1; grid-row: 1; min-width: 0; }
+  #header-center  { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  #header-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
+
+  #team-bar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+  }
+  body.teams-on #team-bar { display: flex; }
+
+  .swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.45);
+    transform: scale(1.15);
+  }
+  .team-hint { font-size: 11px; color: #aaa; margin-right: 2px; }
 
   .country-toggle {
     background: rgba(255,255,255,0.12);
@@ -64,6 +94,7 @@
   }
   .country-toggle:hover { background: rgba(255,255,255,0.22); color: white; }
   .country-toggle.active { background: white; color: #1a1a2e; border-color: white; font-weight: 600; }
+  .country-toggle.small { padding: 4px 11px; font-size: 11px; }
 
   #main {
     display: flex;
@@ -99,6 +130,7 @@
   .pref.locked, .pref.hovered { stroke: #000 !important; stroke-width: var(--sw, 1.4px) !important; }
 
   /* Okinawa inset frame */
+  body.no-okinawa #inset-group { display: none; }
   .inset-box {
     fill: none;
     stroke: #b9c6d2;
@@ -294,15 +326,17 @@
     header {
       padding: 10px 16px 8px;
       grid-template-columns: 1fr auto;
-      grid-template-rows: auto auto;
+      grid-template-rows: auto auto auto;
     }
-    #header-text   { grid-column: 1; grid-row: 1; }
+    #header-text    { grid-column: 1; grid-row: 1; }
     #header-actions { grid-column: 2; grid-row: 1; }
-    #header-center { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    #header-center  { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    #team-bar       { grid-column: 1 / -1; grid-row: 3; padding-top: 8px; }
     header h1 { font-size: 16px; }
     header p  { display: block; font-size: 11px; }
     .country-toggle { padding: 4px 10px; font-size: 11px; }
     .header-btn { font-size: 11px; padding: 4px 10px; }
+    .swatch { width: 20px; height: 20px; }
 
     #main { flex-direction: column; position: relative; }
 
@@ -373,7 +407,7 @@
   }
 </style>
 </head>
-<body>
+<body class="no-okinawa">
 
 <header>
   <div id="header-text">
@@ -381,7 +415,11 @@
     <p>Hover · Click to lock · Click multiple to combine · Right-click or scroll to zoom</p>
   </div>
   <div id="header-center">
+    <button id="islands-toggle" class="country-toggle active" onclick="toggleIslands()"
+            title="Count the Seikan Tunnel, the Kanmon crossing and the Honshu–Shikoku bridges as borders">Islands</button>
+    <button id="okinawa-toggle" class="country-toggle" onclick="toggleOkinawa()">Okinawa</button>
     <button id="shink-toggle" class="country-toggle active" onclick="toggleShinkansen()">Shinkansen</button>
+    <button id="teams-toggle" class="country-toggle" onclick="toggleTeams()">Teams</button>
     <button id="clear-toggle" class="country-toggle" onclick="closeSidebar()">Reset</button>
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
   </div>
@@ -392,6 +430,11 @@
     <a href="https://buymeacoffee.com/alexsapps" target="_blank" rel="noopener noreferrer" title="Buy me a coffee" style="color:#FFDD00;display:flex;align-items:center;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.652-.118.299-.033.598-.073.895-.125l.081-.014c.31-.056.62-.127.932-.171.16-.022.33 0 .466.079a.527.527 0 01.185.538l-.102.544a5.69 5.69 0 01-.31 1.007 5.89 5.89 0 01-2.943 3.072c-.655.328-1.364.544-2.077.68a14.4 14.4 0 01-2.192.168 20.69 20.69 0 01-4.056-.417c-.965-.211-1.912-.52-2.642-1.136a3.679 3.679 0 01-1.204-2.036A3.6 3.6 0 013 9.643v-.026c.026-1.094.5-2.164 1.3-2.985.4-.41.885-.735 1.393-.983a8.16 8.16 0 011.673-.546 13.65 13.65 0 013.65-.28c1.16.052 2.328.183 3.461.446.585.135 1.162.306 1.718.533.45.183.897.405 1.245.728.345.32.555.764.533 1.232zm-.617 8.283c.055-.482.045-.972-.03-1.452-.156-1.004-.584-1.938-1.277-2.67-.386-.41-.84-.75-1.332-1.03a9.7 9.7 0 00-1.668-.71c-1.211-.374-2.487-.558-3.76-.56-1.274-.003-2.552.175-3.766.545a9.714 9.714 0 00-1.672.704c-.492.275-.948.61-1.334 1.018-.695.728-1.127 1.661-1.288 2.663a6.56 6.56 0 00.005 1.993c.17 1.068.655 2.058 1.424 2.83.396.404.863.745 1.38 1.015.516.27 1.072.465 1.638.596a14.58 14.58 0 003.78.294 14.6 14.6 0 003.78-.294c.566-.13 1.122-.325 1.638-.596.517-.27.984-.61 1.38-1.015.77-.772 1.254-1.762 1.424-2.83z"/></svg>
     </a>
+  </div>
+  <div id="team-bar">
+    <span class="team-hint">Pick a color, then click prefectures:</span>
+    <!-- swatches injected here -->
+    <button class="country-toggle small" onclick="clearTeams()">Clear teams</button>
   </div>
 </header>
 
@@ -419,9 +462,11 @@
 <div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
   <div style="background:white;border-radius:12px;padding:32px;max-width:420px;width:90%;position:relative;font-size:15px;line-height:1.7;color:#222;">
     <button onclick="document.getElementById('about-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;">&#x2715;</button>
-    <p>How many prefecture borders apart any two parts of Japan are, counting land borders only.</p>
+    <p>Made for Season 19 of <strong>Jet Lag: The Game</strong>.</p>
     <br>
-    <p>Hokkaido and Okinawa have no land borders, and Kyushu is its own island group &mdash; the Seikan Tunnel and the Kanmon and Seto bridges are not counted.</p>
+    <p>Watch on <a href="https://nebula.tv/jetlag" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Nebula</a> and <a href="https://www.youtube.com/c/jetlagthegame" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Youtube!</a></p>
+    <br>
+    <p style="color:#888;font-size:13px;">Made with Claude Code Opus 5 Ultracode in 2 hours.</p>
     <br>
     <p style="color:#888;font-size:13px;">Prefecture boundaries from <a href="https://www.gsi.go.jp/kankyochiri/gm_jpn.html" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">Global Map Japan</a> (GSI). Shinkansen routes &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" style="color:#0066cc;">OpenStreetMap</a> contributors, ODbL.</p>
   </div>
@@ -468,7 +513,7 @@ const ADJ = {
   '30':['24','27','29'],                         // Wakayama
   '31':['28','32','33','34'],                    // Tottori
   '32':['31','34','35'],                         // Shimane
-  '33':['28','31','34','37'],                    // Okayama
+  '33':['28','31','34','37'],                    // Okayama (Kagawa via Ishima island)
   '34':['31','32','33','35'],                    // Hiroshima
   '35':['32','34'],                              // Yamaguchi
   '36':['37','38','39'],                         // Tokushima
@@ -485,6 +530,16 @@ const ADJ = {
   '47':[],                                       // Okinawa
 };
 
+// Fixed links between the main islands. Okayama–Kagawa is deliberately absent:
+// it is already a real land border (Ishima island is split between them), so
+// turning this off must not remove it.
+const ISLAND_LINKS = [
+  ['1','2'],    // Seikan Tunnel: Hokkaido – Aomori
+  ['35','40'],  // Kanmon crossing: Yamaguchi – Fukuoka
+  ['28','36'],  // Akashi Kaikyo + Onaruto bridges: Hyogo – Tokushima
+  ['34','38'],  // Shimanami Kaido: Hiroshima – Ehime
+];
+
 const PREF_NAMES = {
   '1':'Hokkaido','2':'Aomori','3':'Iwate','4':'Miyagi','5':'Akita',
   '6':'Yamagata','7':'Fukushima','8':'Ibaraki','9':'Tochigi','10':'Gunma',
@@ -500,22 +555,31 @@ const PREF_NAMES = {
 
 function getLabel(c) { return PREF_NAMES[c] || c; }
 
-const MAX_DIST = 12;
+const NEUTRAL = '#c8d6e5';
 
 const DIST_COLORS = [
   '#70CCD9', // 0: selected – teal
-  '#77C043', // 1: green
-  '#BBD532', // 2: yellow-green
-  '#F7E814', // 3: yellow
-  '#FAA81F', // 4: orange-yellow
-  '#F15B23', // 5: orange-red
-  '#DC2E30', // 6: red
-  '#D54472', // 7: rose
-  '#AA53A0', // 8: violet-pink
-  '#6A4EA0', // 9: purple
-  '#3855A5', // 10: dark blue
-  '#3B7DBF', // 11: medium blue
-  '#56B4DE', // 12: light blue
+  '#77C043', // 1
+  '#BBD532', // 2
+  '#F7E814', // 3
+  '#FAA81F', // 4
+  '#F15B23', // 5
+  '#DC2E30', // 6
+  '#D54472', // 7
+  '#AA53A0', // 8
+  '#6A4EA0', // 9
+  '#3855A5', // 10
+  '#3B7DBF', // 11
+  '#56B4DE', // 12
+  '#7ACBE8', // 13
+  '#9FDCEF', // 14
+  '#C2E9F6', // 15
+];
+
+// Ten distinguishable team colours.
+const TEAM_COLORS = [
+  '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4',
+  '#22c8e0', '#f032e6', '#a5c92a', '#469990', '#9a6324'
 ];
 
 function getColor(d) {
@@ -536,6 +600,14 @@ function bfs(start) {
   }
   return dist;
 }
+
+// ── State ────────────────────────────────────────────────────────────────────
+let lockedCodes = [];
+let previewCode = null;
+let activeTeam  = null;          // index into TEAM_COLORS, or null
+const teams     = {};            // prefecture code -> Set of team indices
+let islandsOn   = true;
+let showOkinawa = false;
 
 // ── D3 map setup ─────────────────────────────────────────────────────────────
 const svg = d3.select('#map');
@@ -559,8 +631,6 @@ const projection = d3.geoConicEqualArea().parallels([33, 45]).rotate([-137.5, 0]
 projection.fitExtent([[14, 14], [W - 14, H - 14]], MAIN_BOX);
 const path = d3.geoPath().projection(projection);
 
-// Okinawa inset: same scale as the main map, shifted into the empty top-left
-// corner and clipped to its frame so the Sakishima islands don't spill out.
 const INSET = { x: 18, y: 18, w: 176, h: 150 };
 // Framed on Okinawa's main island group; the Sakishima islands 400km further
 // west fall outside the frame and are clipped away.
@@ -587,22 +657,34 @@ function outlineWidth(size) {
   return Math.max(0.4, Math.min(1.4, 0.26 * Math.sqrt(size)));
 }
 
-let lockedCodes = [];
 const tooltip = document.getElementById('tooltip');
 
-// Build legend
+// ── Legend ───────────────────────────────────────────────────────────────────
 const legendEl = document.getElementById('legend');
-for (let d = 1; d <= MAX_DIST; d++) {
-  const item = document.createElement('div');
-  item.className = 'legend-item';
-  item.innerHTML = `<div class="legend-dot" style="background:${getColor(d)}"></div><span>${d}</span>`;
-  legendEl.appendChild(item);
+
+function computeMaxDist() {
+  let mx = 1;
+  for (const start of Object.keys(ADJ)) {
+    for (const v of Object.values(bfs(start))) if (v > mx) mx = v;
+  }
+  return mx;
+}
+
+function buildLegend() {
+  legendEl.querySelectorAll('.legend-item').forEach(el => el.remove());
+  const max = computeMaxDist();
+  for (let d = 1; d <= max; d++) {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-dot" style="background:${getColor(d)}"></div><span>${d}</span>`;
+    legendEl.appendChild(item);
+  }
 }
 
 // ── Zoom ─────────────────────────────────────────────────────────────────────
 const mapGroup = svg.append('g');
 const prefGroup = mapGroup.append('g');
-const insetGroup = mapGroup.append('g');
+const insetGroup = mapGroup.append('g').attr('id', 'inset-group');
 const shinkGroup = mapGroup.append('g').attr('id', 'shinkansen-group');
 
 const zoomBehavior = d3.zoom()
@@ -645,11 +727,136 @@ function openSidebar() {
 
 function closeSidebar() {
   lockedCodes = [];
-  resetColors();
+  previewCode = null;
+  clearTeams();
   showPlaceholder();
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('map-container').classList.remove('sidebar-open');
   svg.selectAll('.pref').classed('hovered', false).classed('locked', false);
+  repaint();
+}
+
+// ── Team colours ─────────────────────────────────────────────────────────────
+const teamBar = document.getElementById('team-bar');
+TEAM_COLORS.forEach((color, i) => {
+  const b = document.createElement('button');
+  b.className = 'swatch';
+  b.dataset.team = i;
+  b.style.background = color;
+  b.title = `Team ${i + 1}`;
+  b.onclick = () => selectTeam(i);
+  teamBar.insertBefore(b, teamBar.lastElementChild);
+});
+
+function selectTeam(i) {
+  activeTeam = (activeTeam === i) ? null : i;
+  document.querySelectorAll('.swatch').forEach(s =>
+    s.classList.toggle('active', +s.dataset.team === activeTeam));
+}
+
+function toggleTeams() {
+  const on = document.body.classList.toggle('teams-on');
+  document.getElementById('teams-toggle').classList.toggle('active', on);
+  if (!on) {
+    activeTeam = null;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  }
+}
+
+function clearTeams() {
+  for (const k of Object.keys(teams)) delete teams[k];
+  repaint();
+}
+
+function assignTeam(code) {
+  if (activeTeam === null) return;
+  if (!teams[code]) teams[code] = new Set();
+  const set = teams[code];
+  if (set.has(activeTeam)) set.delete(activeTeam); else set.add(activeTeam);
+  if (!set.size) delete teams[code];
+  repaint();
+}
+
+// Diagonal stripes for a prefecture claimed by more than one team.
+function stripePattern(indices) {
+  const id = 'stripe-' + indices.join('-');
+  if (document.getElementById(id)) return id;
+  const sw = 5;
+  const p = defs.append('pattern')
+    .attr('id', id)
+    .attr('width', sw * indices.length)
+    .attr('height', sw)
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('patternTransform', 'rotate(45)');
+  indices.forEach((ci, i) => {
+    p.append('rect')
+      .attr('x', i * sw).attr('y', 0)
+      .attr('width', sw).attr('height', sw)
+      .attr('fill', TEAM_COLORS[ci]);
+  });
+  return id;
+}
+
+function teamFill(set) {
+  const idx = [...set].sort((a, b) => a - b);
+  if (idx.length === 1) return TEAM_COLORS[idx[0]];
+  return `url(#${stripePattern(idx)})`;
+}
+
+// ── Painting ─────────────────────────────────────────────────────────────────
+function repaint() {
+  const basis = lockedCodes.length ? lockedCodes : (previewCode ? [previewCode] : []);
+  const dists = basis.map(c => bfs(c));
+  svg.selectAll('.pref').style('fill', function() {
+    const code = d3.select(this).attr('data-code');
+    if (!code) return NEUTRAL;
+    const t = teams[code];
+    if (t && t.size) return teamFill(t);
+    if (!basis.length) return NEUTRAL;
+    if (basis.includes(code)) return getColor(0);
+    let min = Infinity;
+    for (const d of dists) if (code in d) min = Math.min(min, d[code]);
+    return min === Infinity ? '#bbb' : getColor(min);
+  });
+}
+
+// ── Toggles ──────────────────────────────────────────────────────────────────
+function applyIslandLinks(on) {
+  for (const [a, b] of ISLAND_LINKS) {
+    if (on) {
+      if (!ADJ[a].includes(b)) ADJ[a].push(b);
+      if (!ADJ[b].includes(a)) ADJ[b].push(a);
+    } else {
+      ADJ[a] = ADJ[a].filter(x => x !== b);
+      ADJ[b] = ADJ[b].filter(x => x !== a);
+    }
+  }
+}
+
+function toggleIslands() {
+  islandsOn = !islandsOn;
+  document.getElementById('islands-toggle').classList.toggle('active', islandsOn);
+  applyIslandLinks(islandsOn);
+  buildLegend();
+  repaint();
+  if (lockedCodes.length) updateSidebar(lockedCodes);
+}
+
+function toggleOkinawa() {
+  showOkinawa = !showOkinawa;
+  document.body.classList.toggle('no-okinawa', !showOkinawa);
+  document.getElementById('okinawa-toggle').classList.toggle('active', showOkinawa);
+  if (!showOkinawa && lockedCodes.includes('47')) {
+    lockedCodes = lockedCodes.filter(c => c !== '47');
+    if (!lockedCodes.length) { closeSidebar(); return; }
+  }
+  repaint();
+  if (lockedCodes.length) updateSidebar(lockedCodes);
+}
+
+function toggleShinkansen() {
+  const hidden = document.body.classList.toggle('no-shink');
+  document.getElementById('shink-toggle').classList.toggle('active', !hidden);
 }
 
 // ── Prefectures ──────────────────────────────────────────────────────────────
@@ -666,7 +873,7 @@ fetch('https://cdn.jsdelivr.net/gh/dataofjapan/land@9d753ba27254210900cb22645a55
         .attr('d', geoPath)
         .attr('data-code', d => String(d.properties.id))
         .style('--sw', d => outlineWidth(Math.sqrt(geoPath.area(d))) + 'px')
-        .style('fill', '#c8d6e5')
+        .style('fill', NEUTRAL)
         .on('mousemove', function(event, d) {
           if (isMobile()) return;
           const code = String(d.properties.id);
@@ -676,8 +883,10 @@ fetch('https://cdn.jsdelivr.net/gh/dataofjapan/land@9d753ba27254210900cb22645a55
           tooltip.style.left = (event.clientX + 12) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
 
+          if (activeTeam !== null) return;      // painting teams, don't preview
           if (lockedCodes.length === 0) {
-            applyColors(code);
+            previewCode = code;
+            repaint();
             svg.selectAll('.pref.hovered').classed('hovered', false);
             d3.select(this).classed('hovered', true).raise();
           }
@@ -686,8 +895,10 @@ fetch('https://cdn.jsdelivr.net/gh/dataofjapan/land@9d753ba27254210900cb22645a55
           if (isMobile()) return;
           tooltip.style.display = 'none';
           d3.select(this).classed('hovered', false);
+          if (activeTeam !== null) return;
           if (lockedCodes.length === 0) {
-            resetColors();
+            previewCode = null;
+            repaint();
           } else {
             lockedCodes.forEach(c =>
               svg.selectAll('.pref').filter(e => String(e.properties.id) === c).raise()
@@ -695,7 +906,9 @@ fetch('https://cdn.jsdelivr.net/gh/dataofjapan/land@9d753ba27254210900cb22645a55
           }
         })
         .on('click', function(event, d) {
-          lockPref(String(d.properties.id));
+          const code = String(d.properties.id);
+          if (activeTeam !== null) { assignTeam(code); return; }
+          lockPref(code);
         });
     }
 
@@ -729,44 +942,31 @@ fetch('/static/shinkansen.json')
         .attr('d', path);
   });
 
-function toggleShinkansen() {
-  const hidden = document.body.classList.toggle('no-shink');
-  document.getElementById('shink-toggle').classList.toggle('active', !hidden);
-}
-
 function lockPref(code) {
   if (!(code in PREF_NAMES)) return;
   if (lockedCodes.includes(code)) {
     lockedCodes = lockedCodes.filter(c => c !== code);
-    if (lockedCodes.length === 0) { closeSidebar(); return; }
+    if (lockedCodes.length === 0) {
+      previewCode = null;
+      showPlaceholder();
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('map-container').classList.remove('sidebar-open');
+      svg.selectAll('.pref').classed('hovered', false).classed('locked', false);
+      repaint();
+      return;
+    }
   } else {
     const wasEmpty = lockedCodes.length === 0;
     lockedCodes.push(code);
     if (wasEmpty) openSidebar();
   }
-  applyColors(lockedCodes);
+  previewCode = null;
+  repaint();
   updateSidebar(lockedCodes);
   svg.selectAll('.pref').classed('hovered', false).classed('locked', false);
   lockedCodes.forEach(c =>
     svg.selectAll('.pref').filter(e => String(e.properties.id) === c).classed('locked', true).raise()
   );
-}
-
-function applyColors(codes) {
-  const arr = Array.isArray(codes) ? codes : [codes];
-  const dists = arr.map(c => bfs(c));
-  svg.selectAll('.pref').style('fill', function() {
-    const c = d3.select(this).attr('data-code');
-    if (!c) return '#c8d6e5';
-    if (arr.includes(c)) return getColor(0);
-    let min = Infinity;
-    for (const d of dists) if (c in d) min = Math.min(min, d[c]);
-    return min === Infinity ? '#bbb' : getColor(min);
-  });
-}
-
-function resetColors() {
-  svg.selectAll('.pref').style('fill', '#c8d6e5');
 }
 
 function showPlaceholder() {
@@ -792,12 +992,13 @@ if (localStorage.getItem('darkMode')) {
 function updateSidebar(codes) {
   const arr = Array.isArray(codes) ? codes : [codes];
   const dists = arr.map(c => bfs(c));
+  const visible = c => showOkinawa || c !== '47';
 
   // Combined: min distance from any locked prefecture, excluding the locked ones
   const combined = {};
   for (const d of dists) {
     for (const [k, v] of Object.entries(d)) {
-      if (arr.includes(k)) continue;
+      if (arr.includes(k) || !visible(k)) continue;
       if (!(k in combined) || v < combined[k]) combined[k] = v;
     }
   }
@@ -809,7 +1010,8 @@ function updateSidebar(codes) {
     groups[d].push(code);
   }
 
-  const unreachable = Object.keys(PREF_NAMES).filter(c => !arr.includes(c) && !(c in combined));
+  const unreachable = Object.keys(PREF_NAMES)
+    .filter(c => visible(c) && !arr.includes(c) && !(c in combined));
   const reachable = Object.keys(combined).length;
 
   const subtitle = isMobile()
@@ -862,6 +1064,10 @@ function updateSidebar(codes) {
 
   document.getElementById('sidebar-inner').innerHTML = html;
 }
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+applyIslandLinks(islandsOn);
+buildLegend();
 </script>
 </body>
 </html>
