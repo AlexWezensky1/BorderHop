@@ -88,6 +88,9 @@
     padding-top: 10px;
   }
   body.teams-on #team-bar { display: flex; }
+  /* A selected episode sets the colors itself, so the palette would only be in
+     the way. Must come after the rule above: same specificity, later wins. */
+  body.episode-active #team-bar { display: none; }
 
   .swatch {
     width: 22px;
@@ -434,7 +437,7 @@
   }
 </style>
 </head>
-<body class="no-okinawa teams-on">
+<body class="no-okinawa jetlag-on">
 
 <header>
   <div id="header-text">
@@ -442,8 +445,8 @@
     <p>Hover · Click to lock · Click multiple to combine · Right-click or scroll to zoom</p>
   </div>
   <div id="header-center">
-    <button id="jetlag-toggle" class="country-toggle" onclick="toggleJetLag()">Jet Lag</button>
-    <button id="teams-toggle" class="country-toggle active" onclick="toggleTeams()">Teams</button>
+    <button id="jetlag-toggle" class="country-toggle active" onclick="toggleJetLag()">Jet Lag</button>
+    <button id="teams-toggle" class="country-toggle" onclick="toggleTeams()">Teams</button>
     <button id="shink-toggle" class="country-toggle active" onclick="toggleShinkansen()">Shinkansen</button>
     <button id="islands-toggle" class="country-toggle active" onclick="toggleIslands()"
             title="Count the Seikan Tunnel, the Kanmon crossing and the Honshu–Shikoku bridges as borders">Islands</button>
@@ -807,6 +810,9 @@ function selectTeam(i) {
 function toggleTeams() {
   const on = document.body.classList.toggle('teams-on');
   document.getElementById('teams-toggle').classList.toggle('active', on);
+  // The palette is hidden while an episode is up, so asking for the palette
+  // drops the episode rather than lighting a button that shows nothing.
+  if (on && activeEpisode !== null) selectEpisode(activeEpisode);
   if (!on) {
     activeTeam = null;
     document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
@@ -875,6 +881,7 @@ function addTeam(code, team) {
 function markEpisodeButtons() {
   document.querySelectorAll('#jetlag-bar button[data-ep]').forEach(b =>
     b.classList.toggle('active', +b.dataset.ep === activeEpisode));
+  document.body.classList.toggle('episode-active', activeEpisode !== null);
 }
 
 function selectEpisode(n) {
