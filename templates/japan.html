@@ -468,7 +468,7 @@
     <button class="country-toggle small" data-ep="3" onclick="selectEpisode(3)">Episode 3</button>
     <button class="country-toggle small" data-ep="4" onclick="selectEpisode(4)">Episode 4</button>
     <button class="country-toggle small" data-ep="5" onclick="selectEpisode(5)">Episode 5</button>
-    <button class="country-toggle small" disabled>Episode 6</button>
+    <button class="country-toggle small" data-ep="6" onclick="selectEpisode(6)">Episode 6</button>
     <button class="country-toggle small" disabled>Episode 7</button>
     <button class="country-toggle small" disabled>Episode 8</button>
     <span class="jetlag-legend"><span class="jl-dot" data-team="0"></span>Atom</span>
@@ -870,6 +870,7 @@ const JETLAG_EPISODES = [
   { ep: 3, red: ['37','33','28'], yellow: ['33','28'] },
   { ep: 4, red: ['27','26'],      yellow: ['27','26'] },
   { ep: 5, red: ['25','18'],      yellow: ['25','21','23'] },
+  { ep: 6, red: ['17','16'],      yellow: ['22','14','13','11','8','9'] },
 ];
 let activeEpisode = null;
 
