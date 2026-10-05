@@ -63,6 +63,14 @@
   }
   body.jetlag-on #jetlag-bar { display: flex; }
 
+  .divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255,255,255,0.3);
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
   .jetlag-legend {
     display: inline-flex;
     align-items: center;
@@ -362,19 +370,14 @@
     #header-actions { grid-column: 2; grid-row: 1; }
     #header-center  { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; flex-wrap: wrap; }
 
-    /* Each control row stays on one line: tighter type and padding, and a
-       hidden horizontal scroll as a fallback on very narrow screens instead
-       of wrapping. "safe center" keeps the first button reachable if it does
-       overflow. */
+    /* Sized so each control row fits on one line on a phone; on anything
+       narrower the row wraps rather than overflowing. */
     #header-center, .ep-buttons, #team-bar {
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 3px;
       justify-content: center;
-      justify-content: safe center;
-      overflow-x: auto;
-      scrollbar-width: none;
     }
-    #header-center::-webkit-scrollbar, .ep-buttons::-webkit-scrollbar, #team-bar::-webkit-scrollbar { display: none; }
+    .divider { height: 14px; margin: 0 2px; }
     #header-center .country-toggle, #header-center .header-btn,
     #jetlag-bar .country-toggle, #team-bar .country-toggle {
       font-size: clamp(9px, 2.55vw, 11px);
@@ -471,10 +474,12 @@
   <div id="header-center">
     <button id="jetlag-toggle" class="country-toggle active" onclick="toggleJetLag()">Jet Lag</button>
     <button id="teams-toggle" class="country-toggle" onclick="toggleTeams()">Teams</button>
+    <span class="divider"></span>
     <button id="shink-toggle" class="country-toggle active" onclick="toggleShinkansen()">Shinkansen</button>
     <button id="islands-toggle" class="country-toggle active" onclick="toggleIslands()"
             title="Count the Seikan Tunnel, the Kanmon crossing and the Honshu–Shikoku bridges as borders">Islands</button>
     <button id="okinawa-toggle" class="country-toggle" onclick="toggleOkinawa()">Okinawa</button>
+    <span class="divider"></span>
     <button id="clear-toggle" class="country-toggle" onclick="closeSidebar()">Reset</button>
     <button id="dark-toggle" class="header-btn" onclick="toggleDark()">Dark</button>
   </div>
@@ -765,7 +770,7 @@ const insetGroup = mapGroup.append('g').attr('id', 'inset-group');
 const shinkGroup = mapGroup.append('g').attr('id', 'shinkansen-group');
 
 const zoomBehavior = d3.zoom()
-  .scaleExtent([1, 10])
+  .scaleExtent([0.4, 10])
   .filter(event => event.type === 'wheel' || event.button === 2 || !event.button)
   .on('zoom', ({transform}) => mapGroup.attr('transform', transform));
 
@@ -836,9 +841,9 @@ function selectTeam(i) {
 function toggleTeams() {
   const on = document.body.classList.toggle('teams-on');
   document.getElementById('teams-toggle').classList.toggle('active', on);
-  // The palette is hidden while an episode is up, so asking for the palette
-  // drops the episode rather than lighting a button that shows nothing.
-  if (on && activeEpisode !== null) selectEpisode(activeEpisode);
+  // Teams and Jet Lag are alternative ways of painting the map, so turning
+  // one on switches the other off (which also clears any selected episode).
+  if (on && document.body.classList.contains('jetlag-on')) toggleJetLag();
   if (!on) {
     activeTeam = null;
     document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
@@ -928,6 +933,7 @@ function selectEpisode(n) {
 function toggleJetLag() {
   const on = document.body.classList.toggle('jetlag-on');
   document.getElementById('jetlag-toggle').classList.toggle('active', on);
+  if (on && document.body.classList.contains('teams-on')) toggleTeams();
   if (!on && activeEpisode !== null) selectEpisode(activeEpisode);   // clears it
 }
 
