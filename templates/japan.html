@@ -499,8 +499,8 @@
     <button class="country-toggle small" data-ep="4" onclick="selectEpisode(4)">Ep<span class="ep-long">isode</span> 4</button>
     <button class="country-toggle small" data-ep="5" onclick="selectEpisode(5)">Ep<span class="ep-long">isode</span> 5</button>
     <button class="country-toggle small" data-ep="6" onclick="selectEpisode(6)">Ep<span class="ep-long">isode</span> 6</button>
-    <button class="country-toggle small" disabled>Ep<span class="ep-long">isode</span> 7</button>
-    <button class="country-toggle small" disabled>Ep<span class="ep-long">isode</span> 8</button>
+    <button class="country-toggle small" data-ep="7" onclick="selectEpisode(7)">Ep<span class="ep-long">isode</span> 7</button>
+    <button class="country-toggle small" data-ep="8" onclick="selectEpisode(8)">Ep<span class="ep-long">isode</span> 8</button>
     </div>
     <span class="jetlag-legend"><span class="jl-dot" data-team="0"></span>Atom</span>
     <span class="jetlag-legend"><span class="jl-dot" data-team="2"></span>Team Alpha Force</span>
@@ -902,6 +902,8 @@ const JETLAG_EPISODES = [
   { ep: 4, red: ['27','26'],      yellow: ['27','26'] },
   { ep: 5, red: ['25','18'],      yellow: ['25','21','23'] },
   { ep: 6, red: ['17','16'],      yellow: ['22','14','13','11','8','9'] },
+  { ep: 7, red: ['15','6','5'],   yellow: ['7','4','3'] },
+  { ep: 8, red: ['2','1'],        yellow: ['2','1'] },
 ];
 let activeEpisode = null;
 
