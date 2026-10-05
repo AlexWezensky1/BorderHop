@@ -72,6 +72,7 @@
     margin-left: 6px;
     white-space: nowrap;
   }
+  .ep-buttons { display: contents; }
   .jl-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
   .country-toggle:disabled { opacity: 0.32; cursor: default; }
@@ -353,20 +354,43 @@
   /* ── Mobile ── */
   @media (max-width: 768px) {
     header {
-      padding: 10px 16px 8px;
+      padding: 10px 10px 8px;
       grid-template-columns: 1fr auto;
       grid-template-rows: auto auto auto auto;
     }
     #header-text    { grid-column: 1; grid-row: 1; }
     #header-actions { grid-column: 2; grid-row: 1; }
     #header-center  { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 6px; flex-wrap: wrap; }
+
+    /* Each control row stays on one line: tighter type and padding, and a
+       hidden horizontal scroll as a fallback on very narrow screens instead
+       of wrapping. "safe center" keeps the first button reachable if it does
+       overflow. */
+    #header-center, .ep-buttons, #team-bar {
+      flex-wrap: nowrap;
+      gap: 3px;
+      justify-content: center;
+      justify-content: safe center;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #header-center::-webkit-scrollbar, .ep-buttons::-webkit-scrollbar, #team-bar::-webkit-scrollbar { display: none; }
+    #header-center .country-toggle, #header-center .header-btn,
+    #jetlag-bar .country-toggle, #team-bar .country-toggle {
+      font-size: clamp(9px, 2.55vw, 11px);
+      padding: 4px 5px;
+      flex-shrink: 0;
+    }
+    .ep-buttons { display: flex; flex-basis: 100%; }
+    .ep-long { display: none; }
+    .team-hint { display: none; }
     #jetlag-bar     { grid-column: 1 / -1; grid-row: 3; padding-top: 8px; }
     #team-bar       { grid-column: 1 / -1; grid-row: 4; padding-top: 8px; }
     header h1 { font-size: 16px; }
-    header p  { display: block; font-size: 11px; }
+    header p  { display: none; }
     .country-toggle { padding: 4px 10px; font-size: 11px; }
     .header-btn { font-size: 11px; padding: 4px 10px; }
-    .swatch { width: 20px; height: 20px; }
+    .swatch { width: 18px; height: 18px; flex-shrink: 0; }
 
     #main { flex-direction: column; position: relative; }
 
@@ -463,14 +487,16 @@
     </a>
   </div>
   <div id="jetlag-bar">
-    <button class="country-toggle small" data-ep="1" onclick="selectEpisode(1)">Episode 1</button>
-    <button class="country-toggle small" data-ep="2" onclick="selectEpisode(2)">Episode 2</button>
-    <button class="country-toggle small" data-ep="3" onclick="selectEpisode(3)">Episode 3</button>
-    <button class="country-toggle small" data-ep="4" onclick="selectEpisode(4)">Episode 4</button>
-    <button class="country-toggle small" data-ep="5" onclick="selectEpisode(5)">Episode 5</button>
-    <button class="country-toggle small" data-ep="6" onclick="selectEpisode(6)">Episode 6</button>
-    <button class="country-toggle small" disabled>Episode 7</button>
-    <button class="country-toggle small" disabled>Episode 8</button>
+    <div class="ep-buttons">
+    <button class="country-toggle small" data-ep="1" onclick="selectEpisode(1)">Ep<span class="ep-long">isode</span> 1</button>
+    <button class="country-toggle small" data-ep="2" onclick="selectEpisode(2)">Ep<span class="ep-long">isode</span> 2</button>
+    <button class="country-toggle small" data-ep="3" onclick="selectEpisode(3)">Ep<span class="ep-long">isode</span> 3</button>
+    <button class="country-toggle small" data-ep="4" onclick="selectEpisode(4)">Ep<span class="ep-long">isode</span> 4</button>
+    <button class="country-toggle small" data-ep="5" onclick="selectEpisode(5)">Ep<span class="ep-long">isode</span> 5</button>
+    <button class="country-toggle small" data-ep="6" onclick="selectEpisode(6)">Ep<span class="ep-long">isode</span> 6</button>
+    <button class="country-toggle small" disabled>Ep<span class="ep-long">isode</span> 7</button>
+    <button class="country-toggle small" disabled>Ep<span class="ep-long">isode</span> 8</button>
+    </div>
     <span class="jetlag-legend"><span class="jl-dot" data-team="0"></span>Atom</span>
     <span class="jetlag-legend"><span class="jl-dot" data-team="2"></span>Team Alpha Force</span>
   </div>
